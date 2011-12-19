@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include "stack.h"
 
 stack *stack_alloc() {
@@ -9,9 +10,9 @@ stack *stack_alloc() {
     return list;
 }
 
-void stack_push(stack *list, char *val) {
+void stack_push(stack *list, char *val, bool allocated) {
     list->current = malloc(sizeof(stack_item));
-    list->current->val = val;
+    list->current->val = allocated ? val : strdup(val);
     list->current->next = (struct stack_item *)list->top;
     list->top = list->current;
 }
@@ -21,6 +22,7 @@ char stack_pop(stack *list) {
     stack_item *p = list->top;
 
     list->top = (stack_item *)list->top->next;
+    free(p->val);
     free(p);
 
     return *val;
