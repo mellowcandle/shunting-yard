@@ -8,6 +8,8 @@ typedef struct {
     stack_item *top;
 } stack;
 
+stack *stack_alloc();
 void stack_push(stack *list, char val);
 char stack_pop(stack *list);
 void stack_display(stack *list);
+void stack_free(stack *list);
