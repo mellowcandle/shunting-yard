@@ -1,11 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-char *join_argv(int count, char *src[]);
+#include "stack.h"
+#include "shunting-yard.h"
 
 int main(int argc, char *argv[]) {
     const char *str = join_argv(argc, argv);
+
+    stack *operands = malloc(sizeof(stack));
+    stack *operators = malloc(sizeof(stack));
 
     return EXIT_SUCCESS;
 }

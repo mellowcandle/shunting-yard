@@ -1,5 +1,8 @@
+CC = clang
+FILES = shunting-yard.c stack.c
+
 all:
-	clang -O2 -o shunting-yard shunting-yard.c
+	$(CC) -O2 -o shunting-yard $(FILES)
 
 debug:
-	clang -O0 -g -o shunting-yard shunting-yard.c
+	$(CC) -O0 -g -o shunting-yard $(FILES)
