@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 typedef struct {
     char *val;
     struct stack_item *next;
@@ -13,4 +15,5 @@ void stack_push(stack *list, char *val);
 void stack_push_unalloc(stack *list, char *val);
 char *stack_pop(stack *list);
 void stack_display(stack *list);
+bool stack_is_empty(stack *list);
 void stack_free(stack *list);

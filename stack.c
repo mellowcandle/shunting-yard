@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include "stack.h"
 
 stack *stack_alloc() {
@@ -40,6 +41,11 @@ void stack_display(stack *list) {
     }
 
     printf("\n");
+}
+
+bool stack_is_empty(stack *list) {
+    stack_item *p = list->top;
+    return (bool)(p == NULL);
 }
 
 void stack_free(stack *list) {
