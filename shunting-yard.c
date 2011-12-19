@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-char *join_argv(int count, char **src);
+char *join_argv(int count, char *src[]);
 
 int main(int argc, char *argv[]) {
     const char *str = join_argv(argc, argv);
@@ -10,7 +10,7 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
-char *join_argv(int count, char **src) {
+char *join_argv(int count, char *src[]) {
     /* Allocate a buffer for the full string */
     int len = 0;
     for (int i = 0; i < count; ++i)
