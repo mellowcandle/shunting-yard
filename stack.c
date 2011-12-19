@@ -9,7 +9,7 @@ stack *stack_alloc() {
     return list;
 }
 
-void stack_push(stack *list, char val) {
+void stack_push(stack *list, char *val) {
     list->current = malloc(sizeof(stack_item));
     list->current->val = val;
     list->current->next = (struct stack_item *)list->top;
@@ -17,19 +17,19 @@ void stack_push(stack *list, char val) {
 }
 
 char stack_pop(stack *list) {
-    char val = list->top->val;
+    char *val = list->top->val;
     stack_item *p = list->top;
 
     list->top = (stack_item *)list->top->next;
     free(p);
 
-    return val;
+    return *val;
 }
 
 void stack_display(stack *list) {
     stack_item *p = list->top;
     while (p != NULL) {
-        printf("%c ", p->val);
+        printf("%s ", p->val);
         p = (stack_item *)p->next;
     }
 
