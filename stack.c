@@ -21,15 +21,15 @@ void stack_push_unalloc(stack *list, char *val) {
     free(val);
 }
 
-char stack_pop(stack *list) {
-    char *val = list->top->val;
+char *stack_pop(stack *list) {
+    char *val = strdup(list->top->val);
     stack_item *p = list->top;
 
     list->top = (stack_item *)list->top->next;
     free(p->val);
     free(p);
 
-    return *val;
+    return val;
 }
 
 void stack_display(stack *list) {
