@@ -52,7 +52,7 @@ void stack_free(stack *list) {
     stack_item *p = list->top;
     while (p != NULL) {
         p = (stack_item *)p->next;
-        stack_pop(list);
+        free(stack_pop(list));
     }
 
     free(list);
