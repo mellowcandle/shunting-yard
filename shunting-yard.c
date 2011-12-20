@@ -4,6 +4,9 @@
 #include "stack.h"
 #include "shunting-yard.h"
 
+const int op_order_len = 2;
+const char *op_order[] = {"*/", "+-"};
+
 int main(int argc, char *argv[]) {
     char *str = join_argv(argc, argv);
     stack *operands = stack_alloc();
@@ -11,6 +14,7 @@ int main(int argc, char *argv[]) {
 
     /* Loop through expression */
     int token_pos = -1;
+    char *operator;
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
 
@@ -29,6 +33,13 @@ int main(int argc, char *argv[]) {
         /* Operators */
         if (strpbrk(char_str, "+-*/")) {
             /* TODO: Check for operators on the stack and pop/apply them */
+            if (!stack_is_empty(operators)
+                    && compare_operators(stack_top(operators), char_str)) {
+                operator = stack_pop(operators);
+                apply_operator(operator, operands);
+                free(operator);
+            }
+
             stack_push(operators, char_str);
         } else if (str[i] != '\0' && str[i] != '\n')
             printf("unrecognized character \"%c\" at column %d\n", str[i], i);
@@ -37,7 +48,6 @@ int main(int argc, char *argv[]) {
     }
 
     /* End of string - apply any remaining operators on the stack */
-    char *operator;
     while (!stack_is_empty(operators)) {
         operator = stack_pop(operators);
         apply_operator(operator, operands);
@@ -89,13 +99,32 @@ void apply_operator(char *operator, stack *operands) {
 
     int result;
     switch (operator[0]) {
-        case '+':
-            result = val1 + val2;
-            stack_push_unalloc(operands, num_to_str(result));
-            break;
-
-        /* TODO: more operator support! */
+        case '+': result = val1 + val2; break;
+        case '-': result = val1 - val2; break;
+        case '*': result = val1 * val2; break;
+        case '/': result = val1 / val2; break;
     }
+    stack_push_unalloc(operands, num_to_str(result));
+}
+
+/**
+ * Compares the precedence of two operators.
+ *
+ * @param op1 First operator.
+ * @param op2 Second operator.
+ * @return 0 for the first operator, 1 for the second.
+ */
+int compare_operators(char *op1, char *op2) {
+    int op1_rank = -1;
+    int op2_rank = -1;
+
+    /* Loop through operator order and compare */
+    for (int i = 0; i < op_order_len; ++i) {
+        if (strpbrk(op1, op_order[i])) op1_rank = i;
+        if (strpbrk(op2, op_order[i])) op2_rank = i;
+    }
+
+    return op1_rank < op2_rank;
 }
 
 /**
