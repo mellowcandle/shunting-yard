@@ -17,7 +17,6 @@ int main(int argc, char *argv[]) {
 
     /* Loop through expression */
     int token_pos = -1;
-    char *operator;
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
 
@@ -35,13 +34,11 @@ int main(int argc, char *argv[]) {
 
         /* Operators */
         if (strpbrk(char_str, "+-*/")) {
-            /* TODO: Check for operators on the stack and pop/apply them */
+            /* Apply an operator already on the stack if it's of higher
+             * precedence */
             if (!stack_is_empty(operators)
-                    && compare_operators(stack_top(operators), char_str)) {
-                operator = stack_pop(operators);
-                apply_operator(operator, operands);
-                free(operator);
-            }
+                    && compare_operators(stack_top(operators), char_str))
+                apply_operator(stack_pop_char(operators), operands);
 
             stack_push(operators, char_str);
         } else if (str[i] != '\0' && str[i] != '\n')
@@ -51,16 +48,12 @@ int main(int argc, char *argv[]) {
     }
 
     /* End of string - apply any remaining operators on the stack */
-    while (!stack_is_empty(operators)) {
-        operator = stack_pop(operators);
-        apply_operator(operator, operands);
-        free(operator);
-    }
+    while (!stack_is_empty(operators))
+        apply_operator(stack_pop_char(operators), operands);
 
     /* Display the result
      * TODO: Format this correctly and check for well-formedness rather than
-     * lazily displaying the stack
-     */
+     * lazily displaying the stack */
     stack_display(operands);
 
     /* Free memory and exit */
@@ -92,12 +85,12 @@ char *join_argv(int count, char *src[]) {
  * @param operator Operator to use (e.g., +, -, /, *).
  * @param operands Operands stack.
  */
-void apply_operator(char *operator, stack *operands) {
+void apply_operator(char operator, stack *operands) {
     double val2 = strtod_unalloc(stack_pop(operands));
     double val1 = strtod_unalloc(stack_pop(operands));
 
     double result;
-    switch (operator[0]) {
+    switch (operator) {
         case '+': result = val1 + val2; break;
         case '-': result = val1 - val2; break;
         case '*': result = val1 * val2; break;

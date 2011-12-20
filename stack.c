@@ -33,6 +33,18 @@ char *stack_pop(stack *list) {
     return val;
 }
 
+/**
+ * Pop from the stack, but only return a single character, so memory doesn't
+ * have to be freed.
+ */
+char stack_pop_char(stack *list) {
+    char *val = stack_pop(list);
+    char val_char = val[0];
+    free(val);
+
+    return val_char;
+}
+
 char *stack_top(stack *list) {
     return list->top->val;
 }

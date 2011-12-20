@@ -14,6 +14,7 @@ stack *stack_alloc();
 void stack_push(stack *list, char *val);
 void stack_push_unalloc(stack *list, char *val);
 char *stack_pop(stack *list);
+char stack_pop_char(stack *list);
 char *stack_top(stack *list);
 void stack_display(stack *list);
 bool stack_is_empty(stack *list);
