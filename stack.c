@@ -33,6 +33,10 @@ char *stack_pop(stack *list) {
     return val;
 }
 
+char *stack_top(stack *list) {
+    return list->top->val;
+}
+
 void stack_display(stack *list) {
     stack_item *p = list->top;
     while (p != NULL) {
