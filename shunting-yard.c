@@ -4,6 +4,9 @@
 #include "stack.h"
 #include "shunting-yard.h"
 
+/* Number of characters to allocate for floats (including the decimal point) */
+#define FLOAT_LENGTH 8
+
 const int op_order_len = 2;
 const char *op_order[] = {"*/", "+-"};
 
@@ -21,7 +24,7 @@ int main(int argc, char *argv[]) {
         char char_str[] = {str[i], '\0'};   /* convert char to char* */
 
         /* Operands */
-        if (strpbrk(char_str, "1234567890")) {
+        if (strpbrk(char_str, "1234567890.")) {
             if (token_pos == -1) token_pos = i;
             continue;
         } else if (token_pos != -1) { /* end of operand */
@@ -90,14 +93,10 @@ char *join_argv(int count, char *src[]) {
  * @param operands Operands stack.
  */
 void apply_operator(char *operator, stack *operands) {
-    char *val2_ = stack_pop(operands);
-    char *val1_ = stack_pop(operands);
-    int val2 = atoi(val2_);
-    int val1 = atoi(val1_);
-    free(val2_);
-    free(val1_);
+    double val2 = strtod_unalloc(stack_pop(operands));
+    double val1 = strtod_unalloc(stack_pop(operands));
 
-    int result;
+    double result;
     switch (operator[0]) {
         case '+': result = val1 + val2; break;
         case '-': result = val1 - val2; break;
@@ -128,30 +127,20 @@ int compare_operators(char *op1, char *op2) {
 }
 
 /**
- * Calculate the number of digits/character in a base 10 integer.
- *
- * @param num
- * @return Length of number.
+ * Convert a number to a character string, for adding to the stack.
  */
-int num_digits(int num) {
-    int len = 0;
-    while (num) {
-        ++len;
-        num /= 10;
-    }
+char *num_to_str(double num) {
+    char *str = malloc(FLOAT_LENGTH);
+    snprintf(str, FLOAT_LENGTH, "%g", num);
 
-    return len;
+    return str;
 }
 
 /**
- * Convert a number to a character string, for adding to the stack.
- *
- * @param num
- * @return Stringified number.
+ * Wrapper around strtod() that also frees the string that was converted.
  */
-char *num_to_str(int num) {
-    char *str = malloc(num_digits(num) + 1);
-    snprintf(str, num_digits(num) + 1, "%d", num);
-
-    return str;
+double strtod_unalloc(char *str) {
+    double num = strtod(str, NULL);
+    free(str);
+    return num;
 }
