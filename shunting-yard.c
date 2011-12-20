@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
 
     /* Loop through expression */
     int token_pos = -1;
+    int paren_depth = 0;
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
 
@@ -35,16 +36,45 @@ int main(int argc, char *argv[]) {
         /* Operators */
         if (strpbrk(char_str, "+-*/")) {
             /* Apply an operator already on the stack if it's of higher
-             * precedence */
-            if (!stack_is_empty(operators)
+             * precedence, as long as we aren't inside a paren */
+            if (!stack_is_empty(operators) && !paren_depth
                     && compare_operators(stack_top(operators), char_str))
                 apply_operator(stack_pop_char(operators), operands);
 
             stack_push(operators, char_str);
-        } else if (str[i] != '\0' && str[i] != '\n')
-            printf("unrecognized character \"%c\" at column %d\n", str[i], i);
+        }
+        /* Parentheses */
+        else if (str[i] == '(') {
+            stack_push(operators, char_str);
+            ++paren_depth;
+        } else if (str[i] == ')') {
+            if (!paren_depth) {
+                printf("mismatched \")\" character at column %d\n", i + 1);
+                return EXIT_FAILURE;
+            }
+
+            /* Pop and apply operators until we reach the left paren */
+            while (!stack_is_empty(operators)) {
+                if (stack_top(operators)[0] == '(') {
+                    stack_pop_char(operators);
+                    --paren_depth;
+                    break;
+                }
+
+                apply_operator(stack_pop_char(operators), operands);
+            }
+        }
+        /* Unknown character */
+        else if (str[i] != '\0' && str[i] != '\n')
+            printf("unrecognized character \"%c\" at column %d ignored\n",
+                    str[i], i + 1);
 
         if (str[i] == '\n') break;
+    }
+
+    if (paren_depth) {
+        printf("one or more unclosed \"(\" detected\n");
+        return EXIT_FAILURE;
     }
 
     /* End of string - apply any remaining operators on the stack */
