@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -lm -o shunting-yard
+CFLAGS = -std=gnu99 -lm -o shunting-yard
 FILES = shunting-yard.c stack.c
 
 all:
