@@ -1,8 +1,9 @@
 CC = clang
+CFLAGS = -lm -o shunting-yard
 FILES = shunting-yard.c stack.c
 
 all:
-	$(CC) -O2 -o shunting-yard $(FILES)
+	$(CC) $(CFLAGS) -O2 $(FILES)
 
 debug:
-	$(CC) -O0 -g -o shunting-yard $(FILES)
+	$(CC) $(CFLAGS) -O0 -g $(FILES)

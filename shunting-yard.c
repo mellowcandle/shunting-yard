@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <math.h>
 #include "stack.h"
 #include "shunting-yard.h"
 
@@ -16,8 +17,8 @@
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -2
 
-const int op_order_len = 2;
-const char *op_order[] = {"*/", "+-"};
+const int op_order_len = 3;
+const char *op_order[] = {"^", "*/", "+-"};
 
 int main(int argc, char *argv[]) {
     char *str = join_argv(argc, argv);
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
         }
 
         /* Operators */
-        if (strpbrk(char_str, "+-*/")) {
+        if (strpbrk(char_str, "+-*/^")) {
             /* Apply an operator already on the stack if it's of higher
              * precedence, as long as we aren't inside a paren */
             if (!stack_is_empty(operators) && !paren_depth
@@ -151,6 +152,7 @@ bool apply_operator(char operator, stack *operands) {
         case '-': result = val1 - val2; break;
         case '*': result = val1 * val2; break;
         case '/': result = val1 / val2; break;
+        case '^': result = pow(val1, val2); break;
     }
     stack_push_unalloc(operands, num_to_str(result));
 
