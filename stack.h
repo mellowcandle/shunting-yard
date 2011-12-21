@@ -1,5 +1,3 @@
-#include <stdbool.h>
-
 typedef struct {
     char *val;
     struct stack_item *next;

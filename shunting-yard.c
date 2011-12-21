@@ -1,11 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 #include "stack.h"
 #include "shunting-yard.h"
 
 /* Number of characters to allocate for floats (including the decimal point) */
 #define FLOAT_LENGTH 8
+/* Error types */
+#define ERROR_SYNTAX       1
+#define ERROR_SYNTAX_STACK 2
+#define ERROR_RIGHT_PAREN  3
+#define ERROR_LEFT_PAREN   4
+#define ERROR_UNRECOGNIZED 5
+/* For calls to error() with an unknown column number */
+#define NO_COL_NUM -2
 
 const int op_order_len = 2;
 const char *op_order[] = {"*/", "+-"};
@@ -38,8 +47,12 @@ int main(int argc, char *argv[]) {
             /* Apply an operator already on the stack if it's of higher
              * precedence, as long as we aren't inside a paren */
             if (!stack_is_empty(operators) && !paren_depth
-                    && compare_operators(stack_top(operators), char_str))
-                apply_operator(stack_pop_char(operators), operands);
+                    && compare_operators(stack_top(operators), char_str)) {
+                if (!apply_operator(stack_pop_char(operators), operands)) {
+                    error(ERROR_SYNTAX, i, str[i]);
+                    return EXIT_FAILURE;
+                }
+            }
 
             stack_push(operators, char_str);
         }
@@ -49,7 +62,7 @@ int main(int argc, char *argv[]) {
             ++paren_depth;
         } else if (str[i] == ')') {
             if (!paren_depth) {
-                printf("mismatched \")\" character at column %d\n", i + 1);
+                error(ERROR_RIGHT_PAREN, i, str[i]);
                 return EXIT_FAILURE;
             }
 
@@ -61,25 +74,33 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                apply_operator(stack_pop_char(operators), operands);
+                if (!apply_operator(stack_pop_char(operators), operands)) {
+                    error(ERROR_SYNTAX, i, str[i]);
+                    return EXIT_FAILURE;
+                }
             }
         }
         /* Unknown character */
         else if (str[i] != '\0' && str[i] != '\n')
-            printf("unrecognized character \"%c\" at column %d ignored\n",
-                    str[i], i + 1);
+            error(ERROR_UNRECOGNIZED, i, str[i]);
 
         if (str[i] == '\n') break;
     }
 
     if (paren_depth) {
-        printf("one or more unclosed \"(\" detected\n");
+        error(ERROR_LEFT_PAREN, NO_COL_NUM, '(');
         return EXIT_FAILURE;
     }
 
     /* End of string - apply any remaining operators on the stack */
-    while (!stack_is_empty(operators))
-        apply_operator(stack_pop_char(operators), operands);
+    char operator;
+    while (!stack_is_empty(operators)) {
+        operator = stack_pop_char(operators);
+        if (!apply_operator(operator, operands)) {
+            error(ERROR_SYNTAX_STACK, NO_COL_NUM, operator);
+            return EXIT_FAILURE;
+        }
+    }
 
     /* Display the result
      * TODO: Format this correctly and check for well-formedness rather than
@@ -114,8 +135,13 @@ char *join_argv(int count, char *src[]) {
  *
  * @param operator Operator to use (e.g., +, -, /, *).
  * @param operands Operands stack.
+ * @return true on success, false on failure
  */
-void apply_operator(char operator, stack *operands) {
+bool apply_operator(char operator, stack *operands) {
+    /* Check for underflow, as it indicates a syntax error */
+    if (stack_is_empty(operands) || !operands->top->next)
+        return false;
+
     double val2 = strtod_unalloc(stack_pop(operands));
     double val1 = strtod_unalloc(stack_pop(operands));
 
@@ -127,6 +153,8 @@ void apply_operator(char operator, stack *operands) {
         case '/': result = val1 / val2; break;
     }
     stack_push_unalloc(operands, num_to_str(result));
+
+    return true;
 }
 
 /**
@@ -166,4 +194,31 @@ double strtod_unalloc(char *str) {
     double num = strtod(str, NULL);
     free(str);
     return num;
+}
+
+/**
+ * Outputs an error.
+ */
+void error(int type, int col_num, char chr) {
+    ++col_num;  /* bump col_num from zero-indexed to one-indexed for display */
+    switch (type) {
+        case ERROR_SYNTAX:
+            printf("syntax error at column %d with \"%c\"\n", col_num, chr);
+            break;
+        case ERROR_SYNTAX_STACK:
+            printf("syntax error at column (unknown) with \"%c\"\n", chr);
+            break;
+        case ERROR_RIGHT_PAREN:
+            printf("mismatched \"%c\" character at column %d\n", chr, col_num);
+            break;
+        case ERROR_LEFT_PAREN:
+            printf("one or more unclosed \"%c\" detected\n", chr);
+            break;
+        case ERROR_UNRECOGNIZED:
+            printf("unrecognized character \"%c\" at column %d ignored\n", chr,
+                    col_num);
+            break;
+        default:
+            printf("unknown error at column %d with \"%c\"\n", col_num, chr);
+    }
 }
