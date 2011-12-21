@@ -28,8 +28,7 @@ int main(int argc, char *argv[]) {
             if (token_pos == -1) token_pos = i;
             continue;
         } else if (token_pos != -1) { /* end of operand */
-            stack_push_unalloc(operands,
-                    strndup(str + token_pos, i - token_pos));
+            stack_push_unalloc(operands, substr(str, token_pos, i - token_pos));
             token_pos = -1;
         }
 
@@ -213,4 +212,15 @@ void error(int type, int col_num, char chr) {
         default:
             printf("unknown error at column %d with \"%c\"\n", col_num, chr);
     }
+}
+
+/**
+ * Return a substring.
+ */
+char *substr(char *str, int start, int len) {
+    char *substr = malloc(len + 1);
+    memcpy(substr, str + start, len);
+    substr[len] = '\0';
+
+    return substr;
 }
