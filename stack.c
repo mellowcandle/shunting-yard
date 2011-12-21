@@ -23,6 +23,11 @@ void stack_push_unalloc(stack *list, char *val) {
 }
 
 char *stack_pop(stack *list) {
+    if (stack_is_empty(list)) {
+        printf("Stack underflow\n");
+        return NULL;
+    }
+
     char *val = strdup(list->top->val);
     stack_item *p = list->top;
 
