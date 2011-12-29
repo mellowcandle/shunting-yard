@@ -10,3 +10,8 @@
 
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -2
+
+/* Convenience functions */
+#define is_operand(c) (c >= '0' && c <= '9')
+#define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \
+        || c == '^')

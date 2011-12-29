@@ -21,10 +21,10 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
 
-        char char_str[] = {str[i], '\0'};   /* convert char to char* */
+        char chr_str[] = {str[i], '\0'};   /* convert char to char* */
 
         /* Operands */
-        if (strpbrk(char_str, "1234567890.")) {
+        if (is_operand(str[i])) {
             if (token_pos == -1) token_pos = i;
             continue;
         } else if (token_pos != -1) { /* end of operand */
@@ -33,22 +33,22 @@ int main(int argc, char *argv[]) {
         }
 
         /* Operators */
-        if (strpbrk(char_str, "+-*/^")) {
+        if (is_operator(str[i])) {
             /* Apply an operator already on the stack if it's of higher
              * precedence, as long as we aren't inside a paren */
             if (!stack_is_empty(operators) && !paren_depth
-                    && compare_operators(stack_top(operators), char_str)) {
+                    && compare_operators(stack_top(operators), chr_str)) {
                 if (!apply_operator(stack_pop_char(operators), operands)) {
                     error(ERROR_SYNTAX, i, str[i]);
                     return EXIT_FAILURE;
                 }
             }
 
-            stack_push(operators, char_str);
+            stack_push(operators, chr_str);
         }
         /* Parentheses */
         else if (str[i] == '(') {
-            stack_push(operators, char_str);
+            stack_push(operators, chr_str);
             ++paren_depth;
         } else if (str[i] == ')') {
             if (!paren_depth) {
@@ -125,7 +125,7 @@ char *join_argv(int count, char *src[]) {
  *
  * @param operator Operator to use (e.g., +, -, /, *).
  * @param operands Operands stack.
- * @return true on success, false on failure
+ * @return true on success, false on failure.
  */
 bool apply_operator(char operator, stack *operands) {
     /* Check for underflow, as it indicates a syntax error */
