@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -23,6 +23,7 @@
 
 typedef struct {
     char *val;
+    unsigned short int flags;
     struct stack_item *next;
 } stack_item;
 
@@ -32,11 +33,14 @@ typedef struct {
 } stack;
 
 stack *stack_alloc();
-void stack_push(stack *list, char *val);
+void stack_push(stack *list, char *val, unsigned short int flags);
 void stack_push_unalloc(stack *list, char *val);
 char *stack_pop(stack *list);
+stack_item *stack_pop_item(stack *list);
 char stack_pop_char(stack *list);
 char *stack_top(stack *list);
+stack_item *stack_top_item(stack *list);
 void stack_display(stack *list);
 bool stack_is_empty(stack *list);
 void stack_free(stack *list);
+void stack_free_item(stack_item *item);

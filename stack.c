@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,32 +33,44 @@ stack *stack_alloc() {
     return list;
 }
 
-void stack_push(stack *list, char *val) {
+void stack_push(stack *list, char *val, unsigned short int flags) {
     list->current = malloc(sizeof(stack_item));
     list->current->val = strdup(val);
+    list->current->flags = flags;
     list->current->next = (struct stack_item *)list->top;
     list->top = list->current;
 }
 
 void stack_push_unalloc(stack *list, char *val) {
-    stack_push(list, val);
+    stack_push(list, val, 0);
     free(val);
 }
 
+/**
+ * Pop from the stack.
+ */
 char *stack_pop(stack *list) {
+    stack_item *item = stack_pop_item(list);
+
+    char *val = strdup(item->val);
+    stack_free_item(item);
+    return val;
+}
+
+/**
+ * Pop from the stack, and return the entire stack_item (including value and
+ * flags).
+ */
+stack_item *stack_pop_item(stack *list) {
     if (stack_is_empty(list)) {
         printf("Stack underflow\n");
         return NULL;
     }
 
-    char *val = strdup(list->top->val);
-    stack_item *p = list->top;
-
+    stack_item *item = list->top;
     list->top = (stack_item *)list->top->next;
-    free(p->val);
-    free(p);
 
-    return val;
+    return item;
 }
 
 /**
@@ -73,8 +85,18 @@ char stack_pop_char(stack *list) {
     return val_char;
 }
 
+/**
+ * Return the value of the item from the top of the stack without popping.
+ */
 char *stack_top(stack *list) {
     return list->top->val;
+}
+
+/**
+ * Return the item from the top of the stack without popping.
+ */
+stack_item *stack_top_item(stack *list) {
+    return list->top;
 }
 
 void stack_display(stack *list) {
@@ -100,4 +122,12 @@ void stack_free(stack *list) {
     }
 
     free(list);
+}
+
+/**
+ * Free an item from the stack after popping it.
+ */
+void stack_free_item(stack_item *item) {
+    free(item->val);
+    free(item);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -22,10 +22,11 @@
  */
 
 char *join_argv(int count, char *src[]);
-bool apply_operator(char operator, stack *operands);
+bool apply_operator(char operator, bool unary, stack *operands);
 int compare_operators(char *op1, char *op2);
 int num_digits(double num);
 char *num_to_str(double num);
 double strtod_unalloc(char *str);
 void error(int type, int col_num, char chr);
 char *substr(char *str, int start, int len);
+bool is_unary(char operator, char prev_chr);

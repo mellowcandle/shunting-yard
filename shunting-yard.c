@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -45,6 +45,7 @@ int main(int argc, char *argv[]) {
         if (str[i] == ' ') continue;
 
         char chr_str[] = {str[i], '\0'};   /* convert char to char* */
+        char prev_chr = i > 0 ? str[i - 1] : 0;
 
         /* Operands */
         if (is_operand(str[i])) {
@@ -57,21 +58,29 @@ int main(int argc, char *argv[]) {
 
         /* Operators */
         if (is_operator(str[i])) {
-            /* Apply an operator already on the stack if it's of higher
-             * precedence, as long as we aren't inside a paren */
+            /* Apply one operator already on the stack if:
+             *     1. It's of higher precedence
+             *     2. We aren't inside a paren
+             *     3. The current operator and the stack operator are either
+             *        both unary or both binary
+             */
+
+            bool unary = is_unary(str[i], prev_chr);
             if (!stack_is_empty(operators) && !paren_depth
+                    && unary == stack_top_item(operators)->flags
                     && compare_operators(stack_top(operators), chr_str)) {
-                if (!apply_operator(stack_pop_char(operators), operands)) {
+                if (!apply_operator(stack_pop_char(operators), unary,
+                            operands)) {
                     error(ERROR_SYNTAX, i, str[i]);
                     return EXIT_FAILURE;
                 }
             }
 
-            stack_push(operators, chr_str);
+            stack_push(operators, chr_str, unary);
         }
         /* Parentheses */
         else if (str[i] == '(') {
-            stack_push(operators, chr_str);
+            stack_push(operators, chr_str, 0);
             ++paren_depth;
         } else if (str[i] == ')') {
             if (!paren_depth) {
@@ -87,7 +96,10 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                if (!apply_operator(stack_pop_char(operators), operands)) {
+                if (!apply_operator(stack_pop_char(operators), false,
+                            operands)) {
+                    /* TODO: accurate column number (currently is just the col
+                     * num of the right paren) */
                     error(ERROR_SYNTAX, i, str[i]);
                     return EXIT_FAILURE;
                 }
@@ -106,13 +118,14 @@ int main(int argc, char *argv[]) {
     }
 
     /* End of string - apply any remaining operators on the stack */
-    char operator;
+    stack_item *operator;
     while (!stack_is_empty(operators)) {
-        operator = stack_pop_char(operators);
-        if (!apply_operator(operator, operands)) {
-            error(ERROR_SYNTAX_STACK, NO_COL_NUM, operator);
+        operator = stack_pop_item(operators);
+        if (!apply_operator(operator->val[0], operator->flags, operands)) {
+            error(ERROR_SYNTAX_STACK, NO_COL_NUM, operator->val[0]);
             return EXIT_FAILURE;
         }
+        stack_free_item(operator);
     }
 
     /* Display the result
@@ -150,15 +163,39 @@ char *join_argv(int count, char *src[]) {
  * @param operands Operands stack.
  * @return true on success, false on failure.
  */
-bool apply_operator(char operator, stack *operands) {
+bool apply_operator(char operator, bool unary, stack *operands) {
     /* Check for underflow, as it indicates a syntax error */
-    if (stack_is_empty(operands) || !operands->top->next)
+    if (stack_is_empty(operands))
         return false;
 
-    double val2 = strtod_unalloc(stack_pop(operands));
-    double val1 = strtod_unalloc(stack_pop(operands));
-
     double result;
+    double val2 = strtod_unalloc(stack_pop(operands));
+
+    /* Handle unary operators */
+    if (unary) {
+        switch (operator) {
+            case '+':
+                /* values are already assumed positive */
+                stack_push_unalloc(operands, num_to_str(val2));
+                return true;
+            case '-':
+                result = -val2;
+                stack_push_unalloc(operands, num_to_str(result));
+                return true;
+            case '!':
+                result = tgamma(val2 + 1);
+                stack_push_unalloc(operands, num_to_str(result));
+                return true;
+        }
+
+        return false;   /* unknown operator */
+    }
+
+    /* Check for underflow again before we pop another operand */
+    if (stack_is_empty(operands))
+        return false;
+
+    double val1 = strtod_unalloc(stack_pop(operands));
     switch (operator) {
         case '+': result = val1 + val2; break;
         case '-': result = val1 - val2; break;
@@ -246,4 +283,12 @@ char *substr(char *str, int start, int len) {
     substr[len] = '\0';
 
     return substr;
+}
+
+/**
+ * Check if an operator is unary.
+ */
+bool is_unary(char operator, char prev_chr) {
+    return is_operator(prev_chr) || prev_chr == 0 || (is_operand(prev_chr)
+            && operator == '!');
 }
