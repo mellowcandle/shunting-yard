@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
     char *str = join_argv(argc, argv);
     stack *operands = stack_alloc();
     stack *operators = stack_alloc();
+    stack_item *item;
 
     /* Loop through expression */
     int token_pos = -1;
@@ -96,13 +97,14 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
-                if (!apply_operator(stack_pop_char(operators), false,
-                            operands)) {
+                item = stack_pop_item(operators);
+                if (!apply_operator(item->val[0], item->flags, operands)) {
                     /* TODO: accurate column number (currently is just the col
                      * num of the right paren) */
                     error(ERROR_SYNTAX, i, str[i]);
                     return EXIT_FAILURE;
                 }
+                stack_free_item(item);
             }
         }
         /* Unknown character */
@@ -118,14 +120,13 @@ int main(int argc, char *argv[]) {
     }
 
     /* End of string - apply any remaining operators on the stack */
-    stack_item *operator;
     while (!stack_is_empty(operators)) {
-        operator = stack_pop_item(operators);
-        if (!apply_operator(operator->val[0], operator->flags, operands)) {
-            error(ERROR_SYNTAX_STACK, NO_COL_NUM, operator->val[0]);
+        item = stack_pop_item(operators);
+        if (!apply_operator(item->val[0], item->flags, operands)) {
+            error(ERROR_SYNTAX_STACK, NO_COL_NUM, item->val[0]);
             return EXIT_FAILURE;
         }
-        stack_free_item(operator);
+        stack_free_item(item);
     }
 
     /* Display the result
