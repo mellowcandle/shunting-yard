@@ -303,9 +303,10 @@ char *trim_double(double num) {
     char *str = malloc(DECIMAL_DIG + 1);
     snprintf(str, DECIMAL_DIG + 1, "%f", num);
 
-    for (int i = strlen(str); i > 0; --i) {
-        if (str[i] == '\0') continue;
-        if (str[i] != '0' && str[i] != '.') break;
+    for (int i = strlen(str) - 1; i > 0; --i) {
+        if (str[i] == '.') str[i] = '\0';
+        if (str[i] != '0') break;
+
         str[i] = '\0';
     }
 
