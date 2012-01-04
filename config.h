@@ -21,9 +21,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Number of characters to allocate for floats (including the decimal point) */
-#define FLOAT_LENGTH 8
-
 /* Error types */
 #define ERROR_SYNTAX       1
 #define ERROR_SYNTAX_STACK 2

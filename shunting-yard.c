@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <math.h>
+#include <float.h>
 #include "config.h"
 #include "stack.h"
 #include "shunting-yard.h"
@@ -129,10 +130,11 @@ int main(int argc, char *argv[]) {
         stack_free_item(item);
     }
 
-    /* Display the result
-     * TODO: Format this correctly and check for well-formedness rather than
-     * lazily displaying the stack */
-    stack_display(operands);
+    /* Display the final result */
+    double result = strtod_unalloc(stack_pop(operands));
+    char *result_str = trim_double(result);
+    printf("%s\n", result_str);
+    free(result_str);
 
     /* Free memory and exit */
     stack_free(operands);
@@ -233,8 +235,8 @@ int compare_operators(char *op1, char *op2) {
  * Convert a number to a character string, for adding to the stack.
  */
 char *num_to_str(double num) {
-    char *str = malloc(FLOAT_LENGTH);
-    snprintf(str, FLOAT_LENGTH, "%g", num);
+    char *str = malloc(DECIMAL_DIG + 1);
+    snprintf(str, DECIMAL_DIG + 1, "%a", num);
 
     return str;
 }
@@ -292,4 +294,20 @@ char *substr(char *str, int start, int len) {
 bool is_unary(char operator, char prev_chr) {
     return is_operator(prev_chr) || prev_chr == 0 || (is_operand(prev_chr)
             && operator == '!');
+}
+
+/**
+ * Remove trailing zeroes from a double and return it as a string.
+ */
+char *trim_double(double num) {
+    char *str = malloc(DECIMAL_DIG + 1);
+    snprintf(str, DECIMAL_DIG + 1, "%f", num);
+
+    for (int i = strlen(str); i > 0; --i) {
+        if (str[i] == '\0') continue;
+        if (str[i] != '0' && str[i] != '.') break;
+        str[i] = '\0';
+    }
+
+    return str;
 }

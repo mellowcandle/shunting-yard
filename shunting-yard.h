@@ -30,3 +30,4 @@ double strtod_unalloc(char *str);
 void error(int type, int col_num, char chr);
 char *substr(char *str, int start, int len);
 bool is_unary(char operator, char prev_chr);
+char *trim_double(double num);
