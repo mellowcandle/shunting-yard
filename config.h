@@ -32,6 +32,6 @@
 #define NO_COL_NUM -2
 
 /* Convenience functions */
-#define is_operand(c) (c >= '0' && c <= '9')
+#define is_operand(c) ((c >= '0' && c <= '9') || c == '.')
 #define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \
         || c == '^' || c == '!')
