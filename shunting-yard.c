@@ -27,6 +27,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <float.h>
+#include <ctype.h>
 #include "config.h"
 #include "stack.h"
 #include "shunting-yard.h"
@@ -55,13 +56,14 @@ int main(int argc, char *argv[]) {
             if (token_pos == -1) token_pos = i;
             continue;
         } else if (token_pos != -1) { /* end of operand */
-            operand = substr(str, token_pos, i - token_pos);
+            operand = rtrim(substr(str, token_pos, i - token_pos));
 
-            /* Syntax check. Error if:
+            /* Syntax check. Error if one of the following is true:
              *     1. Operand ONLY contains "."
-             *     2. Operand contains more than one "."
+             *     2. Operand contains a space
+             *     3. Operand contains more than one "."
              */
-            if (strcmp(operand, ".") == 0
+            if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
                     || strchr(operand, '.') != strrchr(operand, '.')) {
                 error(ERROR_SYNTAX_OPERAND, token_pos, ' ');
                 return EXIT_FAILURE;
@@ -326,5 +328,16 @@ char *trim_double(double num) {
         str[i] = '\0';
     }
 
+    return str;
+}
+
+/**
+ * Trim whitespace from the end of a string.
+ */
+char *rtrim(char *str)
+{
+    char *end = str + strlen(str);
+    while (isspace(*--end));
+    *(end + 1) = '\0';
     return str;
 }
