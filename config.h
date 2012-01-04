@@ -22,11 +22,12 @@
  */
 
 /* Error types */
-#define ERROR_SYNTAX       1
-#define ERROR_SYNTAX_STACK 2
-#define ERROR_RIGHT_PAREN  3
-#define ERROR_LEFT_PAREN   4
-#define ERROR_UNRECOGNIZED 5
+#define ERROR_SYNTAX         1
+#define ERROR_SYNTAX_STACK   2
+#define ERROR_SYNTAX_OPERAND 3
+#define ERROR_RIGHT_PAREN    4
+#define ERROR_LEFT_PAREN     5
+#define ERROR_UNRECOGNIZED   6
 
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -2

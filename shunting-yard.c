@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
     /* Loop through expression */
     int token_pos = -1;
     int paren_depth = 0;
+    char *operand;
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
 
@@ -54,7 +55,19 @@ int main(int argc, char *argv[]) {
             if (token_pos == -1) token_pos = i;
             continue;
         } else if (token_pos != -1) { /* end of operand */
-            stack_push_unalloc(operands, substr(str, token_pos, i - token_pos));
+            operand = substr(str, token_pos, i - token_pos);
+
+            /* Syntax check. Error if:
+             *     1. Operand ONLY contains "."
+             *     2. Operand contains more than one "."
+             */
+            if (strcmp(operand, ".") == 0
+                    || strchr(operand, '.') != strrchr(operand, '.')) {
+                error(ERROR_SYNTAX_OPERAND, token_pos, ' ');
+                return EXIT_FAILURE;
+            }
+
+            stack_push_unalloc(operands, operand);
             token_pos = -1;
         }
 
@@ -260,6 +273,10 @@ void error(int type, int col_num, char chr) {
             break;
         case ERROR_SYNTAX_STACK:
             printf("syntax error at column (unknown) with \"%c\"\n", chr);
+            break;
+        case ERROR_SYNTAX_OPERAND:
+            printf("syntax error with operand starting at column %d\n",
+                    col_num);
             break;
         case ERROR_RIGHT_PAREN:
             printf("mismatched \"%c\" character at column %d\n", chr, col_num);
