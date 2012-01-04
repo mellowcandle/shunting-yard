@@ -31,8 +31,8 @@
 #include "stack.h"
 #include "shunting-yard.h"
 
-const int op_order_len = 3;
-const char *op_order[] = {"^", "*/", "+-"};
+const int op_order_len = 4;
+const char *op_order[] = {"^", "*/", "+-", "("};
 
 int main(int argc, char *argv[]) {
     char *str = join_argv(argc, argv);
@@ -62,13 +62,12 @@ int main(int argc, char *argv[]) {
         if (is_operator(str[i])) {
             /* Apply one operator already on the stack if:
              *     1. It's of higher precedence
-             *     2. We aren't inside a paren
-             *     3. The current operator and the stack operator are either
+             *     2. The current operator and the stack operator are either
              *        both unary or both binary
              */
 
             bool unary = is_unary(str[i], prev_chr);
-            if (!stack_is_empty(operators) && !paren_depth
+            if (!stack_is_empty(operators)
                     && unary == stack_top_item(operators)->flags
                     && compare_operators(stack_top(operators), chr_str)) {
                 if (!apply_operator(stack_pop_char(operators), unary,
