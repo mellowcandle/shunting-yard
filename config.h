@@ -35,6 +35,12 @@
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -1
 
+/* Size of string to hold a hexadecimal representation of double precision
+ * floating point numbers */
+#define DOUBLE_STR_LEN 32
+/* Number of digits before showing scientific notation */
+#define MIN_E_DIGITS   12
+
 /* Convenience functions */
 #define is_operand(c) ((c >= '0' && c <= '9') || c == '.')
 #define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \

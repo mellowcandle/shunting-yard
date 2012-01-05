@@ -260,8 +260,8 @@ int compare_operators(char *op1, char *op2) {
  * Convert a number to a character string, for adding to the stack.
  */
 char *num_to_str(double num) {
-    char *str = malloc(DECIMAL_DIG + 1);
-    snprintf(str, DECIMAL_DIG + 1, "%a", num);
+    char *str = malloc(DOUBLE_STR_LEN);
+    snprintf(str, DOUBLE_STR_LEN, "%a", num);
 
     return str;
 }
@@ -345,7 +345,8 @@ bool is_unary(char operator, char prev_chr) {
  */
 char *trim_double(double num) {
     char *str = malloc(DECIMAL_DIG + 1);
-    snprintf(str, DECIMAL_DIG + 1, "%f", num);
+    snprintf(str, DECIMAL_DIG + 1,
+            num >= pow(10, MIN_E_DIGITS) ? "%.*e" : "%.*f", MIN_E_DIGITS, num);
 
     for (int i = strlen(str) - 1; i > 0; --i) {
         if (str[i] == '.') str[i] = '\0';
