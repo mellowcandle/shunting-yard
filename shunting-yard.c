@@ -45,6 +45,7 @@ int main(int argc, char *argv[]) {
     /* Loop through expression */
     int token_pos = -1;
     int paren_depth = 0;
+    int paren_pos = -1; /* only used for error reporting */
     char *operand;
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
@@ -99,6 +100,7 @@ int main(int argc, char *argv[]) {
         else if (str[i] == '(') {
             stack_push(operators, chr_str, 0);
             ++paren_depth;
+            if (paren_depth == 1) paren_pos = i;
         } else if (str[i] == ')') {
             if (!paren_depth) {
                 error(ERROR_RIGHT_PAREN, i, str);
@@ -133,7 +135,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (paren_depth) {
-        error(ERROR_LEFT_PAREN, NO_COL_NUM, str);
+        error(ERROR_LEFT_PAREN, paren_pos, str);
         return EXIT_FAILURE;
     }
 
