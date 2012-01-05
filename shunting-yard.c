@@ -79,19 +79,20 @@ int main(int argc, char *argv[]) {
         if (is_operator(str[i])) {
             /* Apply one operator already on the stack if:
              *     1. It's of higher precedence
-             *     2. The current operator and the stack operator are either
-             *        both unary or both binary
+             *     2. The current operator either isn't unary, or is unary and
+             *        the previous operator is unary too
              */
 
             bool unary = is_unary(str[i], prev_chr);
             if (!stack_is_empty(operators)
-                    && unary == stack_top_item(operators)->flags
+                    && ((unary && stack_top_item(operators)->flags) || !unary)
                     && compare_operators(stack_top(operators), chr_str)) {
-                if (!apply_operator(stack_pop_char(operators), unary,
-                            operands)) {
+                item = stack_pop_item(operators);
+                if (!apply_operator(item->val[0], item->flags, operands)) {
                     error(ERROR_SYNTAX, i, str);
                     return EXIT_FAILURE;
                 }
+                stack_free_item(item);
             }
 
             stack_push(operators, chr_str, unary);
@@ -329,8 +330,13 @@ char *substr(char *str, int start, int len) {
  * Check if an operator is unary.
  */
 bool is_unary(char operator, char prev_chr) {
-    return is_operator(prev_chr) || prev_chr == 0 || (is_operand(prev_chr)
-            && operator == '!');
+    /* Special case for postfix unary operators */
+    if (prev_chr == '!' && operator != '!')
+        return false;
+
+    /* Right paren counts as an operand for this check */
+    return is_operator(prev_chr) || prev_chr == 0 || ((is_operand(prev_chr)
+                || prev_chr == ')') && operator == '!');
 }
 
 /**
