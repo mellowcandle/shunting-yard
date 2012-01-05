@@ -21,6 +21,9 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Terminal width (for error output excerpts) */
+#define TERM_WIDTH 80
+
 /* Error types */
 #define ERROR_SYNTAX         1
 #define ERROR_SYNTAX_STACK   2
@@ -30,9 +33,10 @@
 #define ERROR_UNRECOGNIZED   6
 
 /* For calls to error() with an unknown column number */
-#define NO_COL_NUM -2
+#define NO_COL_NUM -1
 
 /* Convenience functions */
 #define is_operand(c) ((c >= '0' && c <= '9') || c == '.')
 #define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \
         || c == '^' || c == '!')
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))

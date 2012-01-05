@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
              */
             if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
                     || strchr(operand, '.') != strrchr(operand, '.')) {
-                error(ERROR_SYNTAX_OPERAND, token_pos, ' ');
+                error(ERROR_SYNTAX_OPERAND, token_pos, str);
                 return EXIT_FAILURE;
             }
 
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
                     && compare_operators(stack_top(operators), chr_str)) {
                 if (!apply_operator(stack_pop_char(operators), unary,
                             operands)) {
-                    error(ERROR_SYNTAX, i, str[i]);
+                    error(ERROR_SYNTAX, i, str);
                     return EXIT_FAILURE;
                 }
             }
@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
             ++paren_depth;
         } else if (str[i] == ')') {
             if (!paren_depth) {
-                error(ERROR_RIGHT_PAREN, i, str[i]);
+                error(ERROR_RIGHT_PAREN, i, str);
                 return EXIT_FAILURE;
             }
 
@@ -116,21 +116,23 @@ int main(int argc, char *argv[]) {
                 if (!apply_operator(item->val[0], item->flags, operands)) {
                     /* TODO: accurate column number (currently is just the col
                      * num of the right paren) */
-                    error(ERROR_SYNTAX, i, str[i]);
+                    error(ERROR_SYNTAX, i, str);
                     return EXIT_FAILURE;
                 }
                 stack_free_item(item);
             }
         }
         /* Unknown character */
-        else if (str[i] != '\0' && str[i] != '\n')
-            error(ERROR_UNRECOGNIZED, i, str[i]);
+        else if (str[i] != '\0' && str[i] != '\n') {
+            error(ERROR_UNRECOGNIZED, i, str);
+            return EXIT_FAILURE;
+        }
 
         if (str[i] == '\n') break;
     }
 
     if (paren_depth) {
-        error(ERROR_LEFT_PAREN, NO_COL_NUM, '(');
+        error(ERROR_LEFT_PAREN, NO_COL_NUM, str);
         return EXIT_FAILURE;
     }
 
@@ -138,7 +140,7 @@ int main(int argc, char *argv[]) {
     while (!stack_is_empty(operators)) {
         item = stack_pop_item(operators);
         if (!apply_operator(item->val[0], item->flags, operands)) {
-            error(ERROR_SYNTAX_STACK, NO_COL_NUM, item->val[0]);
+            error(ERROR_SYNTAX_STACK, NO_COL_NUM, str);
             return EXIT_FAILURE;
         }
         stack_free_item(item);
@@ -267,32 +269,42 @@ double strtod_unalloc(char *str) {
 /**
  * Outputs an error.
  */
-void error(int type, int col_num, char chr) {
-    ++col_num;  /* bump col_num from zero-indexed to one-indexed for display */
+void error(int type, int col_num, char *str) {
+    char error_str[TERM_WIDTH] = "Error: ";
     switch (type) {
         case ERROR_SYNTAX:
-            printf("syntax error at column %d with \"%c\"\n", col_num, chr);
-            break;
         case ERROR_SYNTAX_STACK:
-            printf("syntax error at column (unknown) with \"%c\"\n", chr);
-            break;
         case ERROR_SYNTAX_OPERAND:
-            printf("syntax error with operand starting at column %d\n",
-                    col_num);
+            strcat(error_str, "malformed expression");
             break;
         case ERROR_RIGHT_PAREN:
-            printf("mismatched \"%c\" character at column %d\n", chr, col_num);
+            strcat(error_str, "mismatched right parenthesis");
             break;
         case ERROR_LEFT_PAREN:
-            printf("one or more unclosed \"%c\" detected\n", chr);
+            strcat(error_str, "mismatched (unclosed) left parenthesis");
             break;
         case ERROR_UNRECOGNIZED:
-            printf("unrecognized character \"%c\" at column %d ignored\n", chr,
-                    col_num);
+            strcat(error_str, "unrecognized character");
             break;
         default:
-            printf("unknown error at column %d with \"%c\"\n", col_num, chr);
+            strcat(error_str, "unknown error");
     }
+
+    /* Output excerpt and column marker */
+    if (col_num != NO_COL_NUM) {
+        strcat(error_str, ": ");
+
+        ++col_num;  /* width variables below start at 1, so this should too */
+        int total_width = TERM_WIDTH;
+        int msg_width = (int)strlen(error_str);
+        int avail_width = total_width - msg_width;
+        int substr_start = MAX(col_num - avail_width / 2, 0);
+
+        char *excerpt = substr(str, substr_start, avail_width);
+        fprintf(stderr, "%s%s\n", error_str, excerpt);
+        fprintf(stderr, "%*c\n", msg_width + col_num - substr_start, '^');
+    } else
+        fprintf(stderr, "%s\n", error_str);
 }
 
 /**
