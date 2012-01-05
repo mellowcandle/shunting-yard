@@ -28,6 +28,7 @@
 #include <math.h>
 #include <float.h>
 #include <ctype.h>
+#include <libgen.h>
 #include "config.h"
 #include "stack.h"
 #include "shunting-yard.h"
@@ -147,10 +148,14 @@ int main(int argc, char *argv[]) {
     }
 
     /* Display the final result */
-    double result = strtod_unalloc(stack_pop(operands));
-    char *result_str = trim_double(result);
-    printf("%s\n", result_str);
-    free(result_str);
+    if (!stack_is_empty(operands)) {
+        double result = strtod_unalloc(stack_pop(operands));
+        char *result_str = trim_double(result);
+        printf("%s\n", result_str);
+        free(result_str);
+    } else  /* empty input */
+        fprintf(stderr, "%s is a calculator - provide some math!\n",
+                basename(argv[0]));
 
     /* Free memory and exit */
     stack_free(operands);
