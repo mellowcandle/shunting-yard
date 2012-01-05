@@ -47,16 +47,15 @@ int main(int argc, char *argv[]) {
     int paren_depth = 0;
     int paren_pos = -1; /* only used for error reporting */
     char *operand;
+    char prev_chr = '\0';
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
-
         char chr_str[] = {str[i], '\0'};   /* convert char to char* */
-        char prev_chr = i > 0 ? str[i - 1] : 0;
 
         /* Operands */
         if (is_operand(str[i])) {
             if (token_pos == -1) token_pos = i;
-            continue;
+            goto skip;
         } else if (token_pos != -1) { /* end of operand */
             operand = rtrim(substr(str, token_pos, i - token_pos));
 
@@ -132,7 +131,9 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         }
 
+skip:
         if (str[i] == '\n') break;
+        prev_chr = str[i];
     }
 
     if (paren_depth) {
@@ -335,7 +336,7 @@ bool is_unary(char operator, char prev_chr) {
         return false;
 
     /* Right paren counts as an operand for this check */
-    return is_operator(prev_chr) || prev_chr == 0 || ((is_operand(prev_chr)
+    return is_operator(prev_chr) || prev_chr == '\0' || ((is_operand(prev_chr)
                 || prev_chr == ')') && operator == '!');
 }
 
