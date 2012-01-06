@@ -28,7 +28,7 @@
 #include <math.h>
 #include <float.h>
 #include <ctype.h>
-#include <libgen.h>
+#include <errno.h>
 #include "config.h"
 #include "stack.h"
 #include "shunting-yard.h"
@@ -38,6 +38,44 @@ const char *op_order[] = {"^", "*/", "+-", "("};
 
 int main(int argc, char *argv[]) {
     char *str = join_argv(argc, argv);
+    double result = shunting_yard(str);
+    free(str);
+
+    if (errno != SUCCESS)
+        return EXIT_FAILURE;
+
+    char *result_str = trim_double(result);
+    printf("%s\n", result_str);
+    free(result_str);
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * Concatenate all the arguments passed to the program.
+ */
+char *join_argv(int count, char *src[]) {
+    /* Allocate a buffer for the full string */
+    int len = 0;
+    for (int i = 0; i < count; ++i)
+        len += strlen(src[i]) + 1;
+
+    /* Concatenate the arguments */
+    char *str = calloc(count, len + 1);
+    for (int i = 1; i < count; ++i) {
+        if (i > 1) strcat(str, " ");
+        strcat(str, src[i]);
+    }
+
+    return str;
+}
+
+/**
+ * Parse a string and do the calculations. In the event of an error, will set
+ * errno to an error code and return zero.
+ */
+double shunting_yard(char *str) {
+    double result;
     stack *operands = stack_alloc();
     stack *operators = stack_alloc();
     stack_item *item;
@@ -67,7 +105,7 @@ int main(int argc, char *argv[]) {
             if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
                     || strchr(operand, '.') != strrchr(operand, '.')) {
                 error(ERROR_SYNTAX_OPERAND, token_pos, str);
-                return EXIT_FAILURE;
+                goto exit;
             }
 
             stack_push_unalloc(operands, operand);
@@ -89,7 +127,7 @@ int main(int argc, char *argv[]) {
                 item = stack_pop_item(operators);
                 if (!apply_operator(item->val[0], item->flags, operands)) {
                     error(ERROR_SYNTAX, i, str);
-                    return EXIT_FAILURE;
+                    goto exit;
                 }
                 stack_free_item(item);
             }
@@ -104,7 +142,7 @@ int main(int argc, char *argv[]) {
         } else if (str[i] == ')') {
             if (!paren_depth) {
                 error(ERROR_RIGHT_PAREN, i, str);
-                return EXIT_FAILURE;
+                goto exit;
             }
 
             /* Pop and apply operators until we reach the left paren */
@@ -120,7 +158,7 @@ int main(int argc, char *argv[]) {
                     /* TODO: accurate column number (currently is just the col
                      * num of the right paren) */
                     error(ERROR_SYNTAX, i, str);
-                    return EXIT_FAILURE;
+                    goto exit;
                 }
                 stack_free_item(item);
             }
@@ -128,7 +166,7 @@ int main(int argc, char *argv[]) {
         /* Unknown character */
         else if (str[i] != '\0' && str[i] != '\n') {
             error(ERROR_UNRECOGNIZED, i, str);
-            return EXIT_FAILURE;
+            goto exit;
         }
 
 skip:
@@ -138,7 +176,7 @@ skip:
 
     if (paren_depth) {
         error(ERROR_LEFT_PAREN, paren_pos, str);
-        return EXIT_FAILURE;
+        goto exit;
     }
 
     /* End of string - apply any remaining operators on the stack */
@@ -146,42 +184,22 @@ skip:
         item = stack_pop_item(operators);
         if (!apply_operator(item->val[0], item->flags, operands)) {
             error(ERROR_SYNTAX_STACK, NO_COL_NUM, str);
-            return EXIT_FAILURE;
+            goto exit;
         }
         stack_free_item(item);
     }
 
-    /* Display the final result */
-    if (!stack_is_empty(operands)) {
-        double result = strtod_unalloc(stack_pop(operands));
-        char *result_str = trim_double(result);
-        printf("%s\n", result_str);
-        free(result_str);
-    } else  /* empty input */
-        fprintf(stderr, "%s is a calculator - provide some math!\n",
-                basename(argv[0]));
+    /* Save the final result */
+    if (stack_is_empty(operands))
+        error(ERROR_NO_INPUT, NO_COL_NUM, str);
+    else
+        result = strtod_unalloc(stack_pop(operands));
 
-    /* Free memory and exit */
+    /* Free memory and return */
+exit:
     stack_free(operands);
     stack_free(operators);
-    free(str);
-    return EXIT_SUCCESS;
-}
-
-char *join_argv(int count, char *src[]) {
-    /* Allocate a buffer for the full string */
-    int len = 0;
-    for (int i = 0; i < count; ++i)
-        len += strlen(src[i]) + 1;
-
-    /* Concatenate the arguments */
-    char *str = calloc(count, len + 1);
-    for (int i = 1; i < count; ++i) {
-        if (i > 1) strcat(str, " ");
-        strcat(str, src[i]);
-    }
-
-    return str;
+    return result;
 }
 
 /**
@@ -279,6 +297,8 @@ double strtod_unalloc(char *str) {
  * Outputs an error.
  */
 void error(int type, int col_num, char *str) {
+    errno = type;
+
     char error_str[TERM_WIDTH] = "Error: ";
     switch (type) {
         case ERROR_SYNTAX:
@@ -295,6 +315,9 @@ void error(int type, int col_num, char *str) {
         case ERROR_UNRECOGNIZED:
             strcat(error_str, "unrecognized character");
             break;
+        case ERROR_NO_INPUT:
+            fprintf(stderr, "This is a calculator - provide some math!\n");
+            return;
         default:
             strcat(error_str, "unknown error");
     }
@@ -312,6 +335,7 @@ void error(int type, int col_num, char *str) {
         char *excerpt = substr(str, substr_start, avail_width);
         fprintf(stderr, "%s%s\n", error_str, excerpt);
         fprintf(stderr, "%*c\n", msg_width + col_num - substr_start, '^');
+        free(excerpt);
     } else
         fprintf(stderr, "%s\n", error_str);
 }

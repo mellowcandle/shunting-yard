@@ -22,6 +22,7 @@
  */
 
 char *join_argv(int count, char *src[]);
+double shunting_yard(char *str);
 bool apply_operator(char operator, bool unary, stack *operands);
 int compare_operators(char *op1, char *op2);
 int num_digits(double num);

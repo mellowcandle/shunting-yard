@@ -25,12 +25,14 @@
 #define TERM_WIDTH 80
 
 /* Error types */
+#define SUCCESS              0
 #define ERROR_SYNTAX         1
 #define ERROR_SYNTAX_STACK   2
 #define ERROR_SYNTAX_OPERAND 3
 #define ERROR_RIGHT_PAREN    4
 #define ERROR_LEFT_PAREN     5
 #define ERROR_UNRECOGNIZED   6
+#define ERROR_NO_INPUT       7
 
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -1
