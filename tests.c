@@ -27,7 +27,7 @@
 
 #define SY_ASSERT(a, b) CU_ASSERT(a == shunting_yard(b)); CU_ASSERT(0 == errno)
 
-void test_addition() {
+void test_add() {
     SY_ASSERT(4, "2+2");
     SY_ASSERT(4, "2  +  2");
     SY_ASSERT(13, "3 + (5 + 1 + (2 + 2))");
@@ -35,12 +35,44 @@ void test_addition() {
     SY_ASSERT(4.2, "2.1+2.1");
 }
 
-void test_subtraction() {
+void test_subtract() {
     SY_ASSERT(4, "8-4");
     SY_ASSERT(5, "15-10");
-    SY_ASSERT(6, "27-10-11");
+    SY_ASSERT(28, "27 - (10 - 11)");
     SY_ASSERT(-16, "-5-11");
-    SY_ASSERT(-1.6, "2-3.6");
+    SY_ASSERT(1.6, "-(2-3.6)");
+}
+
+void test_multiply() {
+    SY_ASSERT(26, "13 * 2");
+    SY_ASSERT(6.4, "3.2*2");
+    SY_ASSERT(55, "20*2*1.375");
+    SY_ASSERT(-9, "0.75*((2*-4)*1.5)");
+    SY_ASSERT(13.5, "27*0.5");
+}
+
+void test_divide() {
+    SY_ASSERT(0.5, "1/2");
+    SY_ASSERT(0.5549999999999999, "3.885 / 7");     /* floating point fun! */
+    SY_ASSERT(70, "(140/2)/0.5/2");
+    SY_ASSERT(47, "((517/4)/2/.25/.25)/22");
+    SY_ASSERT(86, "2987898/34743");
+}
+
+void test_exponent() {
+    SY_ASSERT(9, "3^2");
+    SY_ASSERT(0.01, "10^-2");
+    SY_ASSERT(16, "4^2");
+    SY_ASSERT(256, "2^8");
+    SY_ASSERT(390625, "5^(2^3)");
+}
+
+void test_factorial() {
+    SY_ASSERT(1, "1!");
+    SY_ASSERT(2, "2!");
+    SY_ASSERT(6, "3!");
+    SY_ASSERT(24.000000000000002, "4!");    /* more floating point fun */
+    SY_ASSERT(119.99999999999997, "5!");
 }
 
 int main() {
@@ -56,8 +88,12 @@ int main() {
         goto cleanup;
 
     /* Add the tests to the suite (run in order) */
-    if ((NULL == CU_add_test(pSuite, "addition", test_addition)) ||
-            (NULL == CU_add_test(pSuite, "subtraction", test_subtraction)))
+    if ((NULL == CU_add_test(pSuite, "addition", test_add)) ||
+            (NULL == CU_add_test(pSuite, "subtraction", test_subtract)) ||
+            (NULL == CU_add_test(pSuite, "multiplication", test_multiply)) ||
+            (NULL == CU_add_test(pSuite, "division", test_divide)) ||
+            (NULL == CU_add_test(pSuite, "exponents", test_exponent)) ||
+            (NULL == CU_add_test(pSuite, "factorials", test_factorial)))
         goto cleanup;
 
     /* Run all tests using the CUnit Basic interface */
