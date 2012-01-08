@@ -11,3 +11,6 @@ debug:
 test:
 	$(CC) $(CFLAGS) -lcunit -o tests $(FILES) tests.c
 	@./tests
+
+clean:
+	rm -f calc tests
