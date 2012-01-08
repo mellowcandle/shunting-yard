@@ -24,13 +24,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 #include <math.h>
 #include <float.h>
 #include <ctype.h>
-#include <errno.h>
 #include "config.h"
-#include "stack.h"
 #include "shunting-yard.h"
 
 const int op_order_len = 4;

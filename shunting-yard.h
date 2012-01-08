@@ -21,6 +21,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdbool.h>
+#include <errno.h>
+#include "stack.h"
+
 double shunting_yard(char *str);
 bool apply_operator(char operator, bool unary, stack *operands);
 int compare_operators(char *op1, char *op2);
