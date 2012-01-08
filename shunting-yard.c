@@ -222,7 +222,8 @@ bool apply_operator(char operator, bool unary, stack *operands) {
  *
  * @param op1 First operator.
  * @param op2 Second operator.
- * @return 0 for the first operator, 1 for the second.
+ * @return 0 if the first operator is of higher precedence, 1 if the second
+ *         operator is of higher or equal precedence.
  */
 int compare_operators(char *op1, char *op2) {
     int op1_rank = -1;
@@ -234,7 +235,7 @@ int compare_operators(char *op1, char *op2) {
         if (strpbrk(op2, op_order[i])) op2_rank = i;
     }
 
-    return op1_rank < op2_rank;
+    return op1_rank <= op2_rank;
 }
 
 /**
