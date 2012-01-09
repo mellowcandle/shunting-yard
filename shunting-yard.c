@@ -41,12 +41,14 @@ double shunting_yard(char *str) {
     double result;
     stack *operands = stack_alloc();
     stack *operators = stack_alloc();
+    stack *functions = stack_alloc();
     stack_item *item;
 
     /* Loop through expression */
     int token_pos = -1;
     int paren_depth = 0;
     int paren_pos = -1; /* only used for error reporting */
+    int func_depth = -1;
     char *operand;
     char prev_chr = '\0';
     for (int i = 0; i <= strlen(str); ++i) {
@@ -99,6 +101,10 @@ double shunting_yard(char *str) {
         }
         /* Parentheses */
         else if (str[i] == '(') {
+            /* Check if this paren is starting a function */
+            if (is_operand(prev_chr))
+                stack_push_unalloc(functions, stack_pop(operands));
+
             stack_push(operators, chr_str, 0);
             ++paren_depth;
             if (paren_depth == 1) paren_pos = i;
@@ -124,6 +130,18 @@ double shunting_yard(char *str) {
                     goto exit;
                 }
                 stack_free_item(item);
+            }
+
+            /* Check if this is the end of a function */
+            if (func_depth && !stack_is_empty(functions)) {
+                operand = stack_pop(functions);
+                if (!apply_function(operand, operands)) {
+                    /* TODO: accurate column number */
+                    error(ERROR_FUNC_UNDEF, i, str);
+                    goto exit;
+                }
+                --func_depth;
+                free(operand);
             }
         }
         /* Unknown character */
@@ -218,6 +236,30 @@ bool apply_operator(char operator, bool unary, stack *operands) {
 }
 
 /**
+ * Apply a function with arguments.
+ */
+bool apply_function(char *func, stack *operands) {
+    /* Pop the last operand from the stack and use it as the argument. Multiple
+     * arguments are not yet supported. */
+    double arg = strtod_unalloc(stack_pop(operands));
+    double result;
+
+    if (strcmp(func, "sqrt") == 0)
+        result = sqrt(arg);
+    else if (strcmp(func, "cos") == 0)
+        result = cos(arg);
+    else if (strcmp(func, "sin") == 0)
+        result = sin(arg);
+    else if (strcmp(func, "tan") == 0)
+        result = tan(arg);
+    else    /* unknown function */
+        return false;
+
+    stack_push_unalloc(operands, num_to_str(result));
+    return true;
+}
+
+/**
  * Compares the precedence of two operators.
  *
  * @param op1 First operator.
@@ -282,6 +324,9 @@ void error(int type, int col_num, char *str) {
         case ERROR_NO_INPUT:
             fprintf(stderr, "This is a calculator - provide some math!\n");
             return;
+        case ERROR_FUNC_UNDEF:
+            strcat(error_str, "undefined function");
+            break;
         default:
             strcat(error_str, "unknown error");
     }
