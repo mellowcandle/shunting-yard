@@ -79,6 +79,8 @@ void test_factorial() {
 }
 
 void test_function() {
+    SY_ASSERT(32, "abs(-32)");
+    SY_ASSERT(12, "abs(-5-7)");
     SY_ASSERT(10, "sqrt(100)");
     SY_ASSERT(10, "sqrt(sqrt(10000))");
     SY_ASSERT(30, "sqrt(sqrt(10000) + 800)");

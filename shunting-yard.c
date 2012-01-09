@@ -245,7 +245,9 @@ bool apply_function(char *func, stack *operands) {
     double arg = strtod_unalloc(stack_pop(operands));
     double result;
 
-    if (0 == strcmp(func, "sqrt"))
+    if (0 == strcmp(func, "abs"))
+        result = abs(arg);
+    else if (0 == strcmp(func, "sqrt"))
         result = sqrt(arg);
     else if (0 == strcmp(func, "ln"))
         result = log(arg);
