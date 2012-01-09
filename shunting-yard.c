@@ -375,9 +375,10 @@ bool is_unary(char operator, char prev_chr) {
     if (prev_chr == '!' && operator != '!')
         return false;
 
-    /* Right paren counts as an operand for this check */
-    return is_operator(prev_chr) || prev_chr == '\0' || ((is_operand(prev_chr)
-                || prev_chr == ')') && operator == '!');
+    /* Left paren counts as an operand for prefix operators, and right paren
+     * counts for postfix operators */
+    return is_operator(prev_chr) || prev_chr == '\0' || prev_chr == '('
+        || ((is_operand(prev_chr) || prev_chr == ')') && operator == '!');
 }
 
 /**

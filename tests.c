@@ -27,7 +27,7 @@
 #include "shunting-yard.h"
 
 #define SY_ASSERT(a, b) CU_ASSERT(abs(a - shunting_yard(b)) == 0); \
-            CU_ASSERT(0 == errno)
+            CU_ASSERT(0 == errno); errno = 0
 
 void test_add() {
     SY_ASSERT(4, "2+2");
@@ -43,6 +43,7 @@ void test_subtract() {
     SY_ASSERT(28, "27 - (10 - 11)");
     SY_ASSERT(-16, "-5-11");
     SY_ASSERT(1.6, "-(2-3.6)");
+    SY_ASSERT(-12, "(-5-7)");
 }
 
 void test_multiply() {
