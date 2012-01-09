@@ -27,6 +27,7 @@
 
 double shunting_yard(char *str);
 bool apply_operator(char operator, bool unary, stack *operands);
+bool apply_unary_operator(char operator, stack *operands);
 bool apply_function(char *func, stack *args);
 int compare_operators(char *op1, char *op2);
 int num_digits(double num);

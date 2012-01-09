@@ -195,43 +195,45 @@ bool apply_operator(char operator, bool unary, stack *operands) {
     if (stack_is_empty(operands))
         return false;
 
+    /* Apply an unary operator */
+    if (unary)
+        return apply_unary_operator(operator, operands);
+
     double result;
     double val2 = strtod_unalloc(stack_pop(operands));
-
-    /* Handle unary operators */
-    if (unary) {
-        switch (operator) {
-            case '+':
-                /* values are already assumed positive */
-                stack_push_unalloc(operands, num_to_str(val2));
-                return true;
-            case '-':
-                result = -val2;
-                stack_push_unalloc(operands, num_to_str(result));
-                return true;
-            case '!':
-                result = tgamma(val2 + 1);
-                stack_push_unalloc(operands, num_to_str(result));
-                return true;
-        }
-
-        return false;   /* unknown operator */
-    }
-
     /* Check for underflow again before we pop another operand */
     if (stack_is_empty(operands))
         return false;
-
     double val1 = strtod_unalloc(stack_pop(operands));
+
     switch (operator) {
         case '+': result = val1 + val2; break;
         case '-': result = val1 - val2; break;
         case '*': result = val1 * val2; break;
         case '/': result = val1 / val2; break;
         case '^': result = pow(val1, val2); break;
+        default: return false;
     }
-    stack_push_unalloc(operands, num_to_str(result));
 
+    stack_push_unalloc(operands, num_to_str(result));
+    return true;
+}
+
+/**
+ * Apply an unary operator to the stack.
+ */
+bool apply_unary_operator(char operator, stack *operands) {
+    double result;
+    double val = strtod_unalloc(stack_pop(operands));
+
+    switch (operator) {
+        case '+': result = val; break;  /* values are assumed positive */
+        case '-': result = -val; break;
+        case '!': result = tgamma(val + 1); break;
+        default: return false;  /* unknown operator */
+    }
+
+    stack_push_unalloc(operands, num_to_str(result));
     return true;
 }
 
