@@ -75,6 +75,14 @@ void test_factorial() {
     SY_ASSERT(119.99999999999997, "5!");
 }
 
+void test_function() {
+    SY_ASSERT(10, "sqrt(100)");
+    SY_ASSERT(10, "sqrt(sqrt(10000))");
+    SY_ASSERT(30, "sqrt(sqrt(10000) + 800)");
+    SY_ASSERT(42, "42 * cos(0)");
+    SY_ASSERT(-1, "(sin(0)*cos(0)*40*tan(0))-1");
+}
+
 int main() {
     CU_pSuite pSuite = NULL;
 
@@ -93,7 +101,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "multiplication", test_multiply)) ||
             (NULL == CU_add_test(pSuite, "division", test_divide)) ||
             (NULL == CU_add_test(pSuite, "exponents", test_exponent)) ||
-            (NULL == CU_add_test(pSuite, "factorials", test_factorial)))
+            (NULL == CU_add_test(pSuite, "factorials", test_factorial)) ||
+            (NULL == CU_add_test(pSuite, "functions", test_function)))
         goto cleanup;
 
     /* Run all tests using the CUnit Basic interface */
