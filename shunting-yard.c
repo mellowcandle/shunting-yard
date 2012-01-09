@@ -48,7 +48,6 @@ double shunting_yard(char *str) {
     int token_pos = -1;
     int paren_depth = 0;
     int paren_pos = -1; /* only used for error reporting */
-    int func_depth = -1;
     char *operand;
     char prev_chr = '\0';
     for (int i = 0; i <= strlen(str); ++i) {
@@ -133,14 +132,13 @@ double shunting_yard(char *str) {
             }
 
             /* Check if this is the end of a function */
-            if (func_depth && !stack_is_empty(functions)) {
+            if (!stack_is_empty(functions)) {
                 operand = stack_pop(functions);
                 if (!apply_function(operand, operands)) {
                     /* TODO: accurate column number */
                     error(ERROR_FUNC_UNDEF, i, str);
                     goto exit;
                 }
-                --func_depth;
                 free(operand);
             }
         }
