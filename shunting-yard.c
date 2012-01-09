@@ -180,6 +180,7 @@ skip:
 exit:
     stack_free(operands);
     stack_free(operators);
+    stack_free(functions);
     return result;
 }
 
