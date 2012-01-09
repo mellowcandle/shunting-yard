@@ -22,10 +22,12 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include <CUnit/Basic.h>
 #include "shunting-yard.h"
 
-#define SY_ASSERT(a, b) CU_ASSERT(a == shunting_yard(b)); CU_ASSERT(0 == errno)
+#define SY_ASSERT(a, b) CU_ASSERT(abs(a - shunting_yard(b)) == 0); \
+            CU_ASSERT(0 == errno)
 
 void test_add() {
     SY_ASSERT(4, "2+2");
@@ -53,7 +55,7 @@ void test_multiply() {
 
 void test_divide() {
     SY_ASSERT(0.5, "1/2");
-    SY_ASSERT(0.5549999999999999, "3.885 / 7");     /* floating point fun! */
+    SY_ASSERT(0.555, "3.885 / 7");
     SY_ASSERT(70, "(140/2)/0.5/2");
     SY_ASSERT(47, "((517/4)/2/.25/.25)/22");
     SY_ASSERT(86, "2987898/34743");
@@ -71,8 +73,8 @@ void test_factorial() {
     SY_ASSERT(1, "1!");
     SY_ASSERT(2, "2!");
     SY_ASSERT(6, "3!");
-    SY_ASSERT(24.000000000000002, "4!");    /* more floating point fun */
-    SY_ASSERT(119.99999999999997, "5!");
+    SY_ASSERT(24, "4!");
+    SY_ASSERT(120, "5!");
 }
 
 void test_function() {
@@ -81,6 +83,11 @@ void test_function() {
     SY_ASSERT(30, "sqrt(sqrt(10000) + 800)");
     SY_ASSERT(42, "42 * cos(0)");
     SY_ASSERT(-1, "(sin(0)*cos(0)*40*tan(0))-1");
+    SY_ASSERT(1, "log(10)");
+    SY_ASSERT(3, "lb(8)");
+    SY_ASSERT(1, "ln(2.718281828459)");     /* replace with e */
+    SY_ASSERT(42, "log(10^42)");
+    SY_ASSERT(123, "lb(2^123)");
 }
 
 int main() {

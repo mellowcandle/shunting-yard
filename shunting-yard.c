@@ -244,13 +244,19 @@ bool apply_function(char *func, stack *operands) {
     double arg = strtod_unalloc(stack_pop(operands));
     double result;
 
-    if (strcmp(func, "sqrt") == 0)
+    if (0 == strcmp(func, "sqrt"))
         result = sqrt(arg);
-    else if (strcmp(func, "cos") == 0)
+    else if (0 == strcmp(func, "ln"))
+        result = log(arg);
+    else if (0 == strcmp(func, "lb"))
+        result = log2(arg);
+    else if (0 == strcmp(func, "lg") || 0 == strcmp(func, "log"))
+        result = log10(arg);
+    else if (0 == strcmp(func, "cos"))
         result = cos(arg);
-    else if (strcmp(func, "sin") == 0)
+    else if (0 == strcmp(func, "sin"))
         result = sin(arg);
-    else if (strcmp(func, "tan") == 0)
+    else if (0 == strcmp(func, "tan"))
         result = tan(arg);
     else    /* unknown function */
         return false;
