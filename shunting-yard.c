@@ -38,7 +38,7 @@ const char *op_order[] = {"^", "*/", "+-", "("};
  * errno to an error code and return zero.
  */
 double shunting_yard(char *str) {
-    double result;
+    double result = 0;
     stack *operands = stack_alloc();
     stack *operators = stack_alloc();
     stack *functions = stack_alloc();
