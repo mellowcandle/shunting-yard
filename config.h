@@ -34,6 +34,7 @@
 #define ERROR_UNRECOGNIZED   6
 #define ERROR_NO_INPUT       7
 #define ERROR_FUNC_UNDEF     8
+#define ERROR_VAR_UNDEF      9
 
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -1
@@ -45,8 +46,9 @@
 #define MIN_E_DIGITS   12
 
 /* Convenience functions */
-#define is_operand(c) ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') \
-        || (c >= 'a' && c <= 'z') || c == '.')
+#define is_numeric(c) ((c >= '0' && c <= '9') || c == '.')
+#define is_alpha(c) ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+#define is_operand(c) (is_numeric(c) || is_alpha(c))
 #define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \
         || c == '^' || c == '!')
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))

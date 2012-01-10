@@ -88,9 +88,17 @@ void test_function() {
     SY_ASSERT(-1, "(sin(0)*cos(0)*40*tan(0))-1");
     SY_ASSERT(1, "log(10)");
     SY_ASSERT(3, "lb(8)");
-    SY_ASSERT(1, "ln(2.718281828459)");     /* replace with e */
+    SY_ASSERT(1, "ln(e)");
     SY_ASSERT(42, "log(10^42)");
     SY_ASSERT(123, "lb(2^123)");
+}
+
+void test_variable() {
+    SY_ASSERT(-1, "cos(pi)");
+    SY_ASSERT(0, "tan(pi)");
+    SY_ASSERT(1, "cos(tau)");
+    SY_ASSERT(1, "cos(2pi)");
+    SY_ASSERT(1, "((2pi/tau)+(10pi))/(1+10pi)");
 }
 
 int main() {
@@ -112,7 +120,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "division", test_divide)) ||
             (NULL == CU_add_test(pSuite, "exponents", test_exponent)) ||
             (NULL == CU_add_test(pSuite, "factorials", test_factorial)) ||
-            (NULL == CU_add_test(pSuite, "functions", test_function)))
+            (NULL == CU_add_test(pSuite, "functions", test_function)) ||
+            (NULL == CU_add_test(pSuite, "variables", test_variable)))
         goto cleanup;
 
     /* Run all tests using the CUnit Basic interface */

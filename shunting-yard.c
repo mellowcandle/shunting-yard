@@ -56,23 +56,24 @@ double shunting_yard(char *str) {
 
         /* Operands */
         if (is_operand(str[i])) {
-            if (token_pos == -1) token_pos = i;
-            goto skip;
-        } else if (token_pos != -1) { /* end of operand */
-            operand = rtrim(substr(str, token_pos, i - token_pos));
-
-            /* Syntax check. Error if one of the following is true:
-             *     1. Operand ONLY contains "."
-             *     2. Operand contains a space
-             *     3. Operand contains more than one "."
-             */
-            if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
-                    || strchr(operand, '.') != strrchr(operand, '.')) {
-                error(ERROR_SYNTAX_OPERAND, token_pos, str);
+            if (token_pos == -1)
+                token_pos = i;
+            else if (is_alpha(str[i]) && is_numeric(prev_chr)) {
+                /* Parse expressions like "2a" */
+                if (!push_operand(str, token_pos, i, operands))
+                    goto exit;
+                stack_push(operators, "*", false);  /* "2a" means "2*a" */
+                token_pos = i;
+            } else if (is_numeric(str[i]) && is_alpha(prev_chr)) {
+                /* "a2" instead of "2a" is invalid */
+                error(ERROR_SYNTAX, i, str);
                 goto exit;
             }
 
-            stack_push_unalloc(operands, operand);
+            goto skip;
+        } else if (token_pos != -1) {   /* end of operand */
+            if (!push_operand(str, token_pos, i, operands))
+                goto exit;
             token_pos = -1;
         }
 
@@ -180,6 +181,41 @@ exit:
     stack_free(operators);
     stack_free(functions);
     return result;
+}
+
+/**
+ * Push an operand onto the stack and substitute any variables.
+ */
+bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
+    char *operand = rtrim(substr(str, pos_a, pos_b - pos_a));
+
+    /* Syntax check. Error if one of the following is true:
+     *     1. Operand ONLY contains "."
+     *     2. Operand contains a space
+     *     3. Operand contains more than one "."
+     */
+    if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
+            || strchr(operand, '.') != strrchr(operand, '.')) {
+        error(ERROR_SYNTAX_OPERAND, pos_a, str);
+        return false;
+    }
+
+    /* Substitute variables */
+    if (is_alpha(operand[0])) {
+        if (0 == strcmp(operand, "e"))
+            operand = num_to_str(M_E);
+        else if (0 == strcmp(operand, "pi"))
+            operand = num_to_str(M_PI);
+        else if (0 == strcmp(operand, "tau"))
+            operand = num_to_str(2 * M_PI);
+        else if (str[pos_b] != '(') {  /* unknown variable */
+            error(ERROR_VAR_UNDEF, pos_a, str);
+            return false;
+        }
+    }
+
+    stack_push_unalloc(operands, operand);
+    return true;
 }
 
 /**
@@ -335,6 +371,9 @@ void error(int type, int col_num, char *str) {
             return;
         case ERROR_FUNC_UNDEF:
             strcat(error_str, "undefined function");
+            break;
+        case ERROR_VAR_UNDEF:
+            strcat(error_str, "undefined variable");
             break;
         default:
             strcat(error_str, "unknown error");
