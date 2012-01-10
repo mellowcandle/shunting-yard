@@ -44,12 +44,17 @@ double shunting_yard(char *str) {
     stack *functions = stack_alloc();
     stack_item *item;
 
-    /* Loop through expression */
+    /* Loop variables */
     int token_pos = -1;
     int paren_depth = 0;
-    int paren_pos = -1; /* only used for error reporting */
     char *operand;
     char prev_chr = '\0';
+
+    /* Variables used only for error() - not required for parsing */
+    int error_type = 0;
+    int paren_pos = -1;
+
+    /* Loop through expression */
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
         char chr_str[] = {str[i], '\0'};   /* convert char to char* */
@@ -135,12 +140,14 @@ double shunting_yard(char *str) {
             /* Check if this is the end of a function */
             if (!stack_is_empty(functions)) {
                 operand = stack_pop(functions);
-                if (!apply_function(operand, operands)) {
+                error_type = apply_function(operand, operands);
+                free(operand);
+
+                if (error_type != SUCCESS) {
                     /* TODO: accurate column number */
-                    error(ERROR_FUNC_UNDEF, i, str);
+                    error(error_type, i, str);
                     goto exit;
                 }
-                free(operand);
             }
         }
         /* Unknown character */
@@ -275,9 +282,13 @@ bool apply_unary_operator(char operator, stack *operands) {
 /**
  * Apply a function with arguments.
  */
-bool apply_function(char *func, stack *operands) {
-    /* Pop the last operand from the stack and use it as the argument. Multiple
-     * arguments are not yet supported. */
+int apply_function(char *func, stack *operands) {
+    /* Function arguments can't be void */
+    if (stack_is_empty(operands))
+        return ERROR_FUNC_NOARGS;
+
+    /* Pop the last operand from the stack and use it as the argument. (Only
+     * functions with exactly one argument are allowed.) */
     double arg = strtod_unalloc(stack_pop(operands));
     double result;
 
@@ -298,10 +309,10 @@ bool apply_function(char *func, stack *operands) {
     else if (0 == strcmp(func, "tan"))
         result = tan(arg);
     else    /* unknown function */
-        return false;
+        return ERROR_FUNC_UNDEF;
 
     stack_push_unalloc(operands, num_to_str(result));
-    return true;
+    return SUCCESS;
 }
 
 /**
@@ -371,6 +382,9 @@ void error(int type, int col_num, char *str) {
             return;
         case ERROR_FUNC_UNDEF:
             strcat(error_str, "undefined function");
+            break;
+        case ERROR_FUNC_NOARGS:
+            strcat(error_str, "function requires arguments");
             break;
         case ERROR_VAR_UNDEF:
             strcat(error_str, "undefined variable");

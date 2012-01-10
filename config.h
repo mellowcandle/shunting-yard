@@ -34,7 +34,8 @@
 #define ERROR_UNRECOGNIZED   6
 #define ERROR_NO_INPUT       7
 #define ERROR_FUNC_UNDEF     8
-#define ERROR_VAR_UNDEF      9
+#define ERROR_FUNC_NOARGS    9
+#define ERROR_VAR_UNDEF      10
 
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -1
