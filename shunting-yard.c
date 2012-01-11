@@ -30,8 +30,10 @@
 #include "config.h"
 #include "shunting-yard.h"
 
-const int op_order_len = 4;
-const char *op_order[] = {"^", "*/", "+-", "("};
+/* Global variables */
+bool sy_quiet = false;  /* suppress error output when true */
+static const int op_order_len = 4;
+static const char *op_order[] = {"^", "*/", "+-", "("};
 
 /**
  * Parse a string and do the calculations. In the event of an error, will set
@@ -360,6 +362,7 @@ double strtod_unalloc(char *str) {
  */
 void error(int type, int col_num, char *str) {
     errno = type;
+    if (sy_quiet) return;   /* suppress error output */
 
     char error_str[TERM_WIDTH] = "Error: ";
     switch (type) {

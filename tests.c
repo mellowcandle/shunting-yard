@@ -26,7 +26,7 @@
 #include <CUnit/Basic.h>
 #include "shunting-yard.h"
 
-#define SY_ASSERT(a, b) CU_ASSERT(abs(a - shunting_yard(b)) == 0); \
+#define SY_ASSERT(a, b) CU_ASSERT(0 == abs(a - shunting_yard(b))); \
             CU_ASSERT(0 == errno); errno = 0
 
 void test_add() {
@@ -102,14 +102,15 @@ void test_variable() {
 }
 
 int main() {
-    CU_pSuite pSuite = NULL;
+    /* Suppress error output from shunting_yard() */
+    sy_quiet = true;
 
     /* Initialize the CUnit test registry */
     if (CUE_SUCCESS != CU_initialize_registry())
         goto error;
 
     /* Add a suite to the registry */
-    pSuite = CU_add_suite("shunting yard", NULL, NULL);
+    CU_pSuite pSuite = CU_add_suite("shunting yard", NULL, NULL);
     if (NULL == pSuite)
         goto cleanup;
 

@@ -25,6 +25,8 @@
 #include <errno.h>
 #include "stack.h"
 
+extern bool sy_quiet;
+
 double shunting_yard(char *str);
 bool push_operand(char *str, int pos_a, int pos_b, stack *operands);
 bool apply_operator(char operator, bool unary, stack *operands);
