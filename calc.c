@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include "config.h"
 #include "shunting-yard.h"
 
 char *join_argv(int count, char *src[]);
@@ -35,7 +34,10 @@ int main(int argc, char *argv[]) {
     double result = shunting_yard(str);
     free(str);
 
-    if (errno != SUCCESS)
+    if (errno == SUCCESS_EQ) {  /* equations (with "=") */
+        printf("%s\n", result ? "true" : "false");
+        return EXIT_SUCCESS;
+    } else if (errno != SUCCESS)
         return EXIT_FAILURE;
 
     char *result_str = trim_double(result);

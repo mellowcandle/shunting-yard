@@ -27,13 +27,12 @@
 #include <math.h>
 #include <float.h>
 #include <ctype.h>
-#include "config.h"
 #include "shunting-yard.h"
 
 /* Global variables */
 bool sy_quiet = false;  /* suppress error output when true */
-static const int op_order_len = 4;
-static const char *op_order[] = {"^", "*/", "+-", "("};
+static const int op_order_len = 5;
+static const char *op_order[] = {"^", "*/", "+-", "=", "("};
 
 /**
  * Parse a string and do the calculations. In the event of an error, will set
@@ -49,8 +48,8 @@ double shunting_yard(char *str) {
     /* Loop variables */
     int token_pos = -1;
     int paren_depth = 0;
-    char *operand;
     char prev_chr = '\0';
+    char *operand;
 
     /* Variables used only for error() - not required for parsing */
     int error_type = 0;
@@ -110,7 +109,7 @@ double shunting_yard(char *str) {
         else if (str[i] == '(') {
             /* Check if this paren is starting a function */
             if (is_operand(prev_chr))
-                stack_push_unalloc(functions, stack_pop(operands));
+                stack_push_unalloc(functions, stack_pop(operands), FLAG_NONE);
 
             stack_push(operators, chr_str, 0);
             ++paren_depth;
@@ -181,8 +180,15 @@ skip:
     /* Save the final result */
     if (stack_is_empty(operands))
         error(ERROR_NO_INPUT, NO_COL_NUM, str);
-    else
-        result = strtod_unalloc(stack_pop(operands));
+    else {
+        item = stack_top_item(operands);
+
+        /* Convert equations into a boolean result */
+        if (errno == SUCCESS_EQ)
+            result = (item->flags == FLAG_BOOL_TRUE) ? 1 : 0;
+        else
+            result = strtod(item->val, NULL);
+    }
 
     /* Free memory and return */
 exit:
@@ -223,16 +229,12 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
         }
     }
 
-    stack_push_unalloc(operands, operand);
+    stack_push_unalloc(operands, operand, FLAG_NONE);
     return true;
 }
 
 /**
  * Apply an operator to the top 2 operands on the stack.
- *
- * @param operator Operator to use (e.g., +, -, /, *).
- * @param operands Operands stack.
- * @return true on success, false on failure.
  */
 bool apply_operator(char operator, bool unary, stack *operands) {
     /* Check for underflow, as it indicates a syntax error */
@@ -243,6 +245,7 @@ bool apply_operator(char operator, bool unary, stack *operands) {
     if (unary)
         return apply_unary_operator(operator, operands);
 
+    short int flags = FLAG_NONE;
     double result;
     double val2 = strtod_unalloc(stack_pop(operands));
     /* Check for underflow again before we pop another operand */
@@ -256,10 +259,24 @@ bool apply_operator(char operator, bool unary, stack *operands) {
         case '*': result = val1 * val2; break;
         case '/': result = val1 / val2; break;
         case '^': result = pow(val1, val2); break;
-        default: return false;
+        case '=':
+            /* Indicate that output is now a boolean instead of a number */
+            errno = SUCCESS_EQ;
+
+            if (0 == abs(val1 - val2)) {
+                result = val1;  /* operator returns original value */
+                /* This is used instead of simply typecasting the result into a
+                 * bool later on, because that would cause "0=0" to return
+                 * false */
+                flags = FLAG_BOOL_TRUE;
+            } else
+                result = 0;
+
+            break;
+        default: return false;  /* unknown operator */
     }
 
-    stack_push_unalloc(operands, num_to_str(result));
+    stack_push_unalloc(operands, num_to_str(result), flags);
     return true;
 }
 
@@ -277,7 +294,7 @@ bool apply_unary_operator(char operator, stack *operands) {
         default: return false;  /* unknown operator */
     }
 
-    stack_push_unalloc(operands, num_to_str(result));
+    stack_push_unalloc(operands, num_to_str(result), FLAG_NONE);
     return true;
 }
 
@@ -313,7 +330,7 @@ int apply_function(char *func, stack *operands) {
     else    /* unknown function */
         return ERROR_FUNC_UNDEF;
 
-    stack_push_unalloc(operands, num_to_str(result));
+    stack_push_unalloc(operands, num_to_str(result), FLAG_NONE);
     return SUCCESS;
 }
 

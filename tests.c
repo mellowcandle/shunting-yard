@@ -27,7 +27,7 @@
 #include "shunting-yard.h"
 
 #define SY_ASSERT(a, b) CU_ASSERT(0 == abs(a - shunting_yard(b))); \
-            CU_ASSERT(0 == errno); errno = 0
+            CU_ASSERT(SUCCESS >= errno); errno = 0
 
 void test_add() {
     SY_ASSERT(4, "2+2");
@@ -101,6 +101,18 @@ void test_variable() {
     SY_ASSERT(1, "((2pi/tau)+(10pi))/(1+10pi)");
 }
 
+void test_equation() {
+    SY_ASSERT(1, "2=2");
+    SY_ASSERT(0, "1=2");
+    SY_ASSERT(1, "0=0");
+    SY_ASSERT(1, "(2=2)");
+    SY_ASSERT(1, "2=2=2");
+    SY_ASSERT(0, "2=1=2");
+    SY_ASSERT(1, "5+3=2+6=10-2");
+    SY_ASSERT(0, "5+3=1+6=10-2");
+    SY_ASSERT(1, "(2+3)=(1+4)=5");
+}
+
 int main() {
     /* Suppress error output from shunting_yard() */
     sy_quiet = true;
@@ -122,7 +134,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "exponents", test_exponent)) ||
             (NULL == CU_add_test(pSuite, "factorials", test_factorial)) ||
             (NULL == CU_add_test(pSuite, "functions", test_function)) ||
-            (NULL == CU_add_test(pSuite, "variables", test_variable)))
+            (NULL == CU_add_test(pSuite, "variables", test_variable)) ||
+            (NULL == CU_add_test(pSuite, "equations", test_equation)))
         goto cleanup;
 
     /* Run all tests using the CUnit Basic interface */

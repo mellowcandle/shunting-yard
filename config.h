@@ -24,18 +24,23 @@
 /* Terminal width (for error output excerpts) */
 #define TERM_WIDTH 80
 
-/* Error types */
-#define SUCCESS              0
-#define ERROR_SYNTAX         1
-#define ERROR_SYNTAX_STACK   2
-#define ERROR_SYNTAX_OPERAND 3
-#define ERROR_RIGHT_PAREN    4
-#define ERROR_LEFT_PAREN     5
-#define ERROR_UNRECOGNIZED   6
-#define ERROR_NO_INPUT       7
-#define ERROR_FUNC_UNDEF     8
-#define ERROR_FUNC_NOARGS    9
-#define ERROR_VAR_UNDEF      10
+/* Return types */
+#define SUCCESS_EQ           -1
+#define SUCCESS               0
+#define ERROR_SYNTAX          1
+#define ERROR_SYNTAX_STACK    2
+#define ERROR_SYNTAX_OPERAND  3
+#define ERROR_RIGHT_PAREN     4
+#define ERROR_LEFT_PAREN      5
+#define ERROR_UNRECOGNIZED    6
+#define ERROR_NO_INPUT        7
+#define ERROR_FUNC_UNDEF      8
+#define ERROR_FUNC_NOARGS     9
+#define ERROR_VAR_UNDEF       10
+
+/* Stack flags */
+#define FLAG_NONE       0
+#define FLAG_BOOL_TRUE  1
 
 /* For calls to error() with an unknown column number */
 #define NO_COL_NUM -1
@@ -51,5 +56,5 @@
 #define is_alpha(c) ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
 #define is_operand(c) (is_numeric(c) || is_alpha(c))
 #define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \
-        || c == '^' || c == '!')
+        || c == '^' || c == '!' || c == '=')
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))

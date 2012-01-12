@@ -33,7 +33,7 @@ stack *stack_alloc() {
     return list;
 }
 
-void stack_push(stack *list, char *val, unsigned short int flags) {
+void stack_push(stack *list, char *val, short int flags) {
     list->current = malloc(sizeof(stack_item));
     list->current->val = strdup(val);
     list->current->flags = flags;
@@ -41,8 +41,8 @@ void stack_push(stack *list, char *val, unsigned short int flags) {
     list->top = list->current;
 }
 
-void stack_push_unalloc(stack *list, char *val) {
-    stack_push(list, val, 0);
+void stack_push_unalloc(stack *list, char *val, short int flags) {
+    stack_push(list, val, flags);
     free(val);
 }
 

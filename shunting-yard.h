@@ -23,6 +23,7 @@
 
 #include <stdbool.h>
 #include <errno.h>
+#include "config.h"
 #include "stack.h"
 
 extern bool sy_quiet;

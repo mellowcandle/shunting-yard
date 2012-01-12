@@ -23,7 +23,7 @@
 
 typedef struct {
     char *val;
-    unsigned short int flags;
+    short int flags;
     struct stack_item *next;
 } stack_item;
 
@@ -33,8 +33,8 @@ typedef struct {
 } stack;
 
 stack *stack_alloc();
-void stack_push(stack *list, char *val, unsigned short int flags);
-void stack_push_unalloc(stack *list, char *val);
+void stack_push(stack *list, char *val, short int flags);
+void stack_push_unalloc(stack *list, char *val, short int flags);
 char *stack_pop(stack *list);
 stack_item *stack_pop_item(stack *list);
 char stack_pop_char(stack *list);
