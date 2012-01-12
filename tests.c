@@ -111,7 +111,7 @@ void test_variable() {
     SY_ASSERT(1, "((2pi/tau)+(10pi))/(1+10pi)");
 }
 
-void test_equation() {
+void test_equal() {
     SY_ASSERT(1, "2=2");
     SY_ASSERT(0, "1=2");
     SY_ASSERT(1, "0=0");
@@ -121,6 +121,18 @@ void test_equation() {
     SY_ASSERT(1, "5+3=2+6=10-2");
     SY_ASSERT(0, "5+3=1+6=10-2");
     SY_ASSERT(1, "(2+3)=(1+4)=5");
+}
+
+void test_order() {
+    SY_ASSERT(10, "6/3*5");
+    SY_ASSERT(12, "6+3*2");
+    SY_ASSERT(-100, "-10^2");
+    SY_ASSERT(100, "(-10)^2");
+    SY_ASSERT(101, "10^2+1");
+    SY_ASSERT(1.01, "10^-2+1");
+    SY_ASSERT(20, "2+6/2*5+10/3-2/6");
+    SY_ASSERT(1000000, "10^3!");
+    SY_ASSERT(M_PI / 100, "10^-2pi");
 }
 
 int main() {
@@ -145,7 +157,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "factorials", test_factorial)) ||
             (NULL == CU_add_test(pSuite, "functions", test_function)) ||
             (NULL == CU_add_test(pSuite, "variables", test_variable)) ||
-            (NULL == CU_add_test(pSuite, "equations", test_equation)))
+            (NULL == CU_add_test(pSuite, "equality", test_equal)) ||
+            (NULL == CU_add_test(pSuite, "order of operations", test_order)))
         goto cleanup;
 
     /* Run all tests using the CUnit Basic interface */
