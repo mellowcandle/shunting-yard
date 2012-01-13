@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
         printf("%s\n", result ? "true" : "false");
         return EXIT_SUCCESS;
     } else if (errno != SUCCESS)
-        return EXIT_FAILURE;
+        return errno;
 
     char *result_str = trim_double(result);
     printf("%s\n", result_str);
