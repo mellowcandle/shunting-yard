@@ -33,7 +33,7 @@
 /* Global variables */
 bool sy_quiet = false;  /* suppress error output when true */
 static const int op_order_len = 5;
-static const char *op_order[] = {"^", "*/", "+-", "=", "("};
+static const char *op_order[] = {"^", "*/", "+-%", "=", "("};
 
 /**
  * Parse a string and do the calculations. In the event of an error, will set
@@ -257,6 +257,7 @@ bool apply_operator(char operator, bool unary, stack *operands) {
         case '-': result = val1 - val2; break;
         case '*': result = val1 * val2; break;
         case '/': result = val1 / val2; break;
+        case '%': result = fmod(val1, val2); break;
         case '^': result = pow(val1, val2); break;
         case '=':
             /* Indicate that output is now a boolean instead of a number */

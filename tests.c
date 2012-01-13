@@ -28,7 +28,7 @@
 #include <CUnit/Basic.h>
 #include "shunting-yard.h"
 
-const double float_precision = 0.0000000000001;
+const double float_precision = 0.000000000001;
 
 #define SY_ASSERT(a, b) CU_ASSERT_DOUBLE_EQUAL(shunting_yard(b), a, \
         float_precision); CU_ASSERT(errno <= SUCCESS); errno = 0
@@ -66,6 +66,16 @@ void test_divide() {
     SY_ASSERT(70, "(140/2)/0.5/2");
     SY_ASSERT(47, "((517/4)/2/.25/.25)/22");
     SY_ASSERT(86, "2987898/34743");
+}
+
+void test_mod() {
+    SY_ASSERT(4, "10 % 6");
+    SY_ASSERT(2, "2+3 % 3");
+    SY_ASSERT(9, "6*5%21");
+    SY_ASSERT(10, "10%11");
+    SY_ASSERT(0, "5 %5");
+    SY_ASSERT(2.7, "5.7%3");
+    SY_ASSERT(1.14159265359, "pi%2");
 }
 
 void test_exponent() {
@@ -172,6 +182,7 @@ int main() {
             (NULL == CU_add_test(pSuite, "subtraction", test_subtract)) ||
             (NULL == CU_add_test(pSuite, "multiplication", test_multiply)) ||
             (NULL == CU_add_test(pSuite, "division", test_divide)) ||
+            (NULL == CU_add_test(pSuite, "modulus", test_mod)) ||
             (NULL == CU_add_test(pSuite, "exponents", test_exponent)) ||
             (NULL == CU_add_test(pSuite, "factorials", test_factorial)) ||
             (NULL == CU_add_test(pSuite, "functions", test_function)) ||
