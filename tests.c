@@ -38,10 +38,12 @@ bool fequals(double a, double b) {
 
 #define SY_ASSERT(a, b) CU_ASSERT(fequals(a, shunting_yard(b))); \
     CU_ASSERT(SUCCESS >= errno); errno = 0
+#define SY_E_ASSERT(a, b) shunting_yard(b); CU_ASSERT(a == errno); errno = 0;
 
 void test_add() {
     SY_ASSERT(4, "2+2");
     SY_ASSERT(4, "2  +  2");
+    SY_ASSERT(4, "2+2.");
     SY_ASSERT(13, "3 + (5 + 1 + (2 + 2))");
     SY_ASSERT(42, "1+2+4+8+16 + 11");
     SY_ASSERT(4.2, "2.1+2.1");
@@ -137,6 +139,22 @@ void test_order() {
     SY_ASSERT(M_PI / 100, "10^-2pi");
 }
 
+void test_error() {
+    SY_E_ASSERT(ERROR_SYNTAX, "a2");
+    SY_E_ASSERT(ERROR_SYNTAX_STACK, "*1");
+    SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*.");
+    SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*2 3");
+    SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*2.3.4");
+    SY_E_ASSERT(ERROR_RIGHT_PAREN, "(2+2))");
+    SY_E_ASSERT(ERROR_LEFT_PAREN, "(2+2");
+    SY_E_ASSERT(ERROR_UNRECOGNIZED, "2+&3");
+    SY_E_ASSERT(ERROR_NO_INPUT, "");
+    SY_E_ASSERT(ERROR_NO_INPUT, "       ");
+    SY_E_ASSERT(ERROR_FUNC_UNDEF, "foo(2)");
+    SY_E_ASSERT(ERROR_FUNC_NOARGS, "sqrt()");
+    SY_E_ASSERT(ERROR_VAR_UNDEF, "foo");
+}
+
 int main() {
     /* Suppress error output from shunting_yard() */
     sy_quiet = true;
@@ -160,7 +178,8 @@ int main() {
             (NULL == CU_add_test(pSuite, "functions", test_function)) ||
             (NULL == CU_add_test(pSuite, "variables", test_variable)) ||
             (NULL == CU_add_test(pSuite, "equality", test_equal)) ||
-            (NULL == CU_add_test(pSuite, "order of operations", test_order)))
+            (NULL == CU_add_test(pSuite, "order of operations", test_order)) ||
+            (NULL == CU_add_test(pSuite, "error handling", test_error)))
         goto cleanup;
 
     /* Run all tests using the CUnit Basic interface */
