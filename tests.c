@@ -24,21 +24,15 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 #include <CUnit/Basic.h>
 #include "shunting-yard.h"
 
-#define FLOAT_PRECISION 13  /* decimal places */
+const double float_precision = 0.0000000000001;
 
-/**
- * Check equality of two floating point numbers.
- */
-bool fequals(double a, double b) {
-    return pow(10, -FLOAT_PRECISION) > fabs(a - b);
-}
-
-#define SY_ASSERT(a, b) CU_ASSERT(fequals(a, shunting_yard(b))); \
-    CU_ASSERT(SUCCESS >= errno); errno = 0
-#define SY_E_ASSERT(a, b) shunting_yard(b); CU_ASSERT(a == errno); errno = 0;
+#define SY_ASSERT(a, b) CU_ASSERT_DOUBLE_EQUAL(shunting_yard(b), a, \
+        float_precision); CU_ASSERT(errno <= SUCCESS); errno = 0
+#define SY_E_ASSERT(a, b) shunting_yard(b); CU_ASSERT_EQUAL(errno, a); errno = 0
 
 void test_add() {
     SY_ASSERT(4, "2+2");
