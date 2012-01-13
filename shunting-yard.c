@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <math.h>
 #include <float.h>
 #include <ctype.h>
@@ -215,11 +216,11 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
 
     /* Substitute variables */
     if (is_alpha(operand[0])) {
-        if (0 == strcmp(operand, "e"))
+        if (0 == strcasecmp(operand, "e"))
             operand = num_to_str(M_E);
-        else if (0 == strcmp(operand, "pi"))
+        else if (0 == strcasecmp(operand, "pi"))
             operand = num_to_str(M_PI);
-        else if (0 == strcmp(operand, "tau"))
+        else if (0 == strcasecmp(operand, "tau"))
             operand = num_to_str(2 * M_PI);
         else if (str[pos_b] != '(') {  /* unknown variable */
             error(ERROR_VAR_UNDEF, pos_a, str);
@@ -333,21 +334,21 @@ int apply_function(char *func, stack *operands) {
     double arg = strtod_unalloc(stack_pop(operands));
     double result;
 
-    if (0 == strcmp(func, "abs"))
+    if (0 == strcasecmp(func, "abs"))
         result = abs(arg);
-    else if (0 == strcmp(func, "sqrt"))
+    else if (0 == strcasecmp(func, "sqrt"))
         result = sqrt(arg);
-    else if (0 == strcmp(func, "ln"))
+    else if (0 == strcasecmp(func, "ln"))
         result = log(arg);
-    else if (0 == strcmp(func, "lb"))
+    else if (0 == strcasecmp(func, "lb"))
         result = log2(arg);
-    else if (0 == strcmp(func, "lg") || 0 == strcmp(func, "log"))
+    else if (0 == strcasecmp(func, "lg") || 0 == strcasecmp(func, "log"))
         result = log10(arg);
-    else if (0 == strcmp(func, "cos"))
+    else if (0 == strcasecmp(func, "cos"))
         result = cos(arg);
-    else if (0 == strcmp(func, "sin"))
+    else if (0 == strcasecmp(func, "sin"))
         result = sin(arg);
-    else if (0 == strcmp(func, "tan"))
+    else if (0 == strcasecmp(func, "tan"))
         result = tan(arg);
     else    /* unknown function */
         return ERROR_FUNC_UNDEF;

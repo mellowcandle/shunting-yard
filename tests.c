@@ -88,13 +88,16 @@ void test_function() {
     SY_ASSERT(32, "abs(-32)");
     SY_ASSERT(12, "abs(-5-7)");
     SY_ASSERT(10, "sqrt(100)");
+    SY_ASSERT(10, "SqRt(100)");
     SY_ASSERT(10, "sqrt(sqrt(10000))");
     SY_ASSERT(30, "sqrt(sqrt(10000) + 800)");
     SY_ASSERT(42, "42 * cos(0)");
     SY_ASSERT(-1, "(sin(0)*cos(0)*40*tan(0))-1");
     SY_ASSERT(1, "log(10)");
+    SY_ASSERT(1, "lOG(10)");
     SY_ASSERT(3, "lb(8)");
     SY_ASSERT(1, "ln(e)");
+    SY_ASSERT(1, "Ln(E)");
     SY_ASSERT(42, "log(10^42)");
     SY_ASSERT(123, "lb(2^123)");
 }
@@ -102,7 +105,9 @@ void test_function() {
 void test_variable() {
     SY_ASSERT(-1, "cos(pi)");
     SY_ASSERT(0, "tan(pi)");
+    SY_ASSERT(0, "Tan(PI)");
     SY_ASSERT(1, "cos(tau)");
+    SY_ASSERT(1, "COS(TAU)");
     SY_ASSERT(1, "cos(2pi)");
     SY_ASSERT(1, "((2pi/tau)+(10pi))/(1+10pi)");
 }
