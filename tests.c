@@ -130,6 +130,8 @@ void test_order() {
     SY_ASSERT(100, "(-10)^2");
     SY_ASSERT(101, "10^2+1");
     SY_ASSERT(1.01, "10^-2+1");
+    SY_ASSERT(0.99, "-10^-2+1");
+    SY_ASSERT(0.02, "10^-2*2");
     SY_ASSERT(20, "2+6/2*5+10/3-2/6");
     SY_ASSERT(1000000, "10^3!");
     SY_ASSERT(M_PI / 100, "10^-2pi");

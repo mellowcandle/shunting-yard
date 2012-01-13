@@ -85,16 +85,16 @@ double shunting_yard(char *str) {
 
         /* Operators */
         if (is_operator(str[i])) {
-            /* Apply one operator already on the stack if:
-             *     1. It's of higher precedence
-             *     2. The current operator either isn't unary, or is unary and
-             *        the previous operator is unary too
-             */
-
             bool unary = is_unary(str[i], prev_chr);
-            if (!stack_is_empty(operators)
-                    && ((unary && stack_top_item(operators)->flags) || !unary)
-                    && compare_operators(stack_top(operators), chr_str)) {
+
+            /* Loop through the operator stack and apply operators until we
+             * reach one that's of lower precedence (with different rules for
+             * unary operators) */
+            while (!stack_is_empty(operators)) {
+                if (!compare_operators(stack_top(operators),
+                            stack_top_item(operators)->flags, chr_str, unary))
+                    break;
+
                 item = stack_pop_item(operators);
                 if (!apply_operator(item->val[0], item->flags, operands)) {
                     error(ERROR_SYNTAX, i, str);
@@ -336,13 +336,8 @@ int apply_function(char *func, stack *operands) {
 
 /**
  * Compares the precedence of two operators.
- *
- * @param op1 First operator.
- * @param op2 Second operator.
- * @return 0 if the first operator is of higher precedence, 1 if the second
- *         operator is of higher or equal precedence.
  */
-int compare_operators(char *op1, char *op2) {
+int compare_operators(char *op1, bool op1_unary, char *op2, bool op2_unary) {
     int op1_rank = -1;
     int op2_rank = -1;
 
@@ -352,7 +347,15 @@ int compare_operators(char *op1, char *op2) {
         if (strpbrk(op2, op_order[i])) op2_rank = i;
     }
 
-    return op1_rank <= op2_rank;
+    /* Confusingly, unary "-" operators are a special case: -10^2 is evaluated
+     * as -(10^2), but -10*2 is evaluated as (-10)*2. However, this only applies
+     * when it's in the op1 position - if it's in op2, as in 10^-2, then
+     * standard unary order is in effect */
+    if (op1_unary && 0 == strcmp(op1, "-"))
+        --op1_rank;
+
+                                   /* unary operators have special precedence */
+    return op1_rank <= op2_rank && (!op2_unary);
 }
 
 /**
