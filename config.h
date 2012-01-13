@@ -57,4 +57,5 @@
 #define is_operand(c) (is_numeric(c) || is_alpha(c))
 #define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \
         || c == '^' || c == '!' || c == '=')
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
