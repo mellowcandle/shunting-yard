@@ -68,8 +68,15 @@ double shunting_yard(char *str) {
                 /* Parse expressions like "2a" */
                 if (!push_operand(str, token_pos, i, operands))
                     goto exit;
-                stack_push(operators, "*", false);  /* "2a" means "2*a" */
                 token_pos = i;
+
+                /* Emulate encountering a "*" operator, since "2a" implies "2*a"
+                 */
+                if (!apply_stack_operators("*", false, operands, operators)) {
+                    error(ERROR_SYNTAX, i, str);
+                    goto exit;
+                }
+                stack_push(operators, "*", false);
             } else if (is_numeric(str[i]) && is_alpha(prev_chr)) {
                 /* "a2" instead of "2a" is invalid */
                 error(ERROR_SYNTAX, i, str);
@@ -87,22 +94,13 @@ double shunting_yard(char *str) {
         if (is_operator(str[i])) {
             bool unary = is_unary(str[i], prev_chr);
 
-            /* Loop through the operator stack and apply operators until we
-             * reach one that's of lower precedence (with different rules for
-             * unary operators) */
-            while (!stack_is_empty(operators)) {
-                if (!compare_operators(stack_top(operators),
-                            stack_top_item(operators)->flags, chr_str, unary))
-                    break;
-
-                item = stack_pop_item(operators);
-                if (!apply_operator(item->val[0], item->flags, operands)) {
-                    error(ERROR_SYNTAX, i, str);
-                    goto exit;
-                }
-                stack_free_item(item);
+            /* Apply any lower precedence operators on the stack first */
+            if (!apply_stack_operators(chr_str, unary, operands, operators)) {
+                error(ERROR_SYNTAX, i, str);
+                goto exit;
             }
 
+            /* Push current operator */
             stack_push(operators, chr_str, unary);
         }
         /* Parentheses */
@@ -297,6 +295,30 @@ bool apply_unary_operator(char operator, stack *operands) {
     stack_push_unalloc(operands, num_to_str(result), FLAG_NONE);
     return true;
 }
+
+/**
+ * Apply one or more operators currently on the stack.
+ */
+bool apply_stack_operators(char *op, bool unary, stack *operands,
+        stack *operators) {
+    /* Loop through the operator stack and apply operators until we
+     * reach one that's of lower precedence (with different rules for
+     * unary operators) */
+    stack_item *item;
+    while (!stack_is_empty(operators)) {
+        if (!compare_operators(stack_top(operators),
+                    stack_top_item(operators)->flags, op, unary))
+            break;
+
+        item = stack_pop_item(operators);
+        if (!apply_operator(item->val[0], item->flags, operands))
+            return false;
+        stack_free_item(item);
+    }
+
+    return true;
+}
+
 
 /**
  * Apply a function with arguments.

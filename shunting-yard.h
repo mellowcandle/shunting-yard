@@ -32,6 +32,8 @@ double shunting_yard(char *str);
 bool push_operand(char *str, int pos_a, int pos_b, stack *operands);
 bool apply_operator(char operator, bool unary, stack *operands);
 bool apply_unary_operator(char operator, stack *operands);
+bool apply_stack_operators(char *op, bool unary, stack *operands,
+        stack *operators);
 int apply_function(char *func, stack *args);
 int compare_operators(char *op1, bool op1_unary, char *op2, bool op2_unary);
 int num_digits(double num);
