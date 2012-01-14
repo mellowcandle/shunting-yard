@@ -446,7 +446,7 @@ void error(int type, int col_num, char *str) {
         ++col_num;  /* width variables below start at 1, so this should too */
         int total_width = TERM_WIDTH;
         int msg_width = (int)strlen(error_str);
-        int avail_width = MIN(total_width - msg_width, strlen(str) + 1);
+        int avail_width = MIN(total_width - msg_width, strlen(str) * 2);
         int substr_start = MAX(col_num - avail_width / 2, 0);
 
         char *excerpt = substr(str, substr_start, avail_width);
