@@ -73,7 +73,7 @@ double shunting_yard(char *str) {
 
                 /* Emulate encountering a "*" operator, since "2a" implies "2*a"
                  */
-                if (!apply_stack_operators("*", false, operands, operators)) {
+                if (!apply_stack_operators('*', false, operands, operators)) {
                     error(ERROR_SYNTAX, i, str);
                     goto exit;
                 }
@@ -96,7 +96,7 @@ double shunting_yard(char *str) {
             bool unary = is_unary(str[i], prev_chr);
 
             /* Apply any lower precedence operators on the stack first */
-            if (!apply_stack_operators(chr_str, unary, operands, operators)) {
+            if (!apply_stack_operators(str[i], unary, operands, operators)) {
                 error(ERROR_SYNTAX, i, str);
                 goto exit;
             }
@@ -235,14 +235,14 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
 /**
  * Apply an operator to the top 2 operands on the stack.
  */
-bool apply_operator(char operator, bool unary, stack *operands) {
+bool apply_operator(char op, bool unary, stack *operands) {
     /* Check for underflow, as it indicates a syntax error */
     if (stack_is_empty(operands))
         return false;
 
-    /* Apply an unary operator */
+    /* Apply a unary operator */
     if (unary)
-        return apply_unary_operator(operator, operands);
+        return apply_unary_operator(op, operands);
 
     short int flags = FLAG_NONE;
     double result;
@@ -252,7 +252,7 @@ bool apply_operator(char operator, bool unary, stack *operands) {
         return false;
     double val1 = strtod_unalloc(stack_pop(operands));
 
-    switch (operator) {
+    switch (op) {
         case '+': result = val1 + val2; break;
         case '-': result = val1 - val2; break;
         case '*': result = val1 * val2; break;
@@ -281,13 +281,13 @@ bool apply_operator(char operator, bool unary, stack *operands) {
 }
 
 /**
- * Apply an unary operator to the stack.
+ * Apply a unary operator to the stack.
  */
-bool apply_unary_operator(char operator, stack *operands) {
+bool apply_unary_operator(char op, stack *operands) {
     double result;
     double val = strtod_unalloc(stack_pop(operands));
 
-    switch (operator) {
+    switch (op) {
         case '+': result = val; break;  /* values are assumed positive */
         case '-': result = -val; break;
         case '!': result = tgamma(val + 1); break;
@@ -301,14 +301,13 @@ bool apply_unary_operator(char operator, stack *operands) {
 /**
  * Apply one or more operators currently on the stack.
  */
-bool apply_stack_operators(char *op, bool unary, stack *operands,
+bool apply_stack_operators(char op, bool unary, stack *operands,
         stack *operators) {
-    /* Loop through the operator stack and apply operators until we
-     * reach one that's of lower precedence (with different rules for
-     * unary operators) */
+    /* Loop through the operator stack and apply operators until we reach one
+     * that's of lower precedence (with different rules for unary operators) */
     stack_item *item;
     while (!stack_is_empty(operators)) {
-        if (!compare_operators(stack_top(operators),
+        if (!compare_operators(*stack_top(operators),
                     stack_top_item(operators)->flags, op, unary))
             break;
 
@@ -361,21 +360,21 @@ int apply_function(char *func, stack *operands) {
 /**
  * Compares the precedence of two operators.
  */
-int compare_operators(char *op1, bool op1_unary, char *op2, bool op2_unary) {
+int compare_operators(char op1, bool op1_unary, char op2, bool op2_unary) {
     int op1_rank = -1;
     int op2_rank = -1;
 
     /* Loop through operator order and compare */
     for (int i = 0; i < op_order_len; ++i) {
-        if (strpbrk(op1, op_order[i])) op1_rank = i;
-        if (strpbrk(op2, op_order[i])) op2_rank = i;
+        if (strchr(op_order[i], op1)) op1_rank = i;
+        if (strchr(op_order[i], op2)) op2_rank = i;
     }
 
     /* Confusingly, unary "-" operators are a special case: -10^2 is evaluated
      * as -(10^2), but -10*2 is evaluated as (-10)*2. However, this only applies
      * when it's in the op1 position - if it's in op2, as in 10^-2, then
      * standard unary order is in effect */
-    if (op1_unary && 0 == strcmp(op1, "-"))
+    if (op1_unary && op1 == '-')
         --op1_rank;
 
                                    /* unary operators have special precedence */
@@ -472,15 +471,15 @@ char *substr(char *str, int start, int len) {
 /**
  * Check if an operator is unary.
  */
-bool is_unary(char operator, char prev_chr) {
+bool is_unary(char op, char prev_chr) {
     /* Special case for postfix unary operators */
-    if (prev_chr == '!' && operator != '!')
+    if (prev_chr == '!' && op != '!')
         return false;
 
     /* Left paren counts as an operand for prefix operators, and right paren
      * counts for postfix operators */
     return is_operator(prev_chr) || prev_chr == '\0' || prev_chr == '('
-        || ((is_operand(prev_chr) || prev_chr == ')') && operator == '!');
+        || ((is_operand(prev_chr) || prev_chr == ')') && op == '!');
 }
 
 /**
@@ -504,8 +503,7 @@ char *trim_double(double num) {
 /**
  * Trim whitespace from the end of a string.
  */
-char *rtrim(char *str)
-{
+char *rtrim(char *str) {
     char *end = str + strlen(str);
     while (isspace(*--end));
     *(end + 1) = '\0';
