@@ -128,14 +128,14 @@ double shunting_yard(char *str) {
                     break;
                 }
 
-                item = stack_pop_item(operators);
+                item = stack_top_item(operators);
                 if (!apply_operator(item->val[0], item->flags, operands)) {
                     /* TODO: accurate column number (currently is just the col
                      * num of the right paren) */
                     error(ERROR_SYNTAX, i, str);
                     goto exit;
                 }
-                stack_free_item(item);
+                free(stack_pop(operators));
             }
 
             /* Check if this is the end of a function */
@@ -169,12 +169,12 @@ skip:
 
     /* End of string - apply any remaining operators on the stack */
     while (!stack_is_empty(operators)) {
-        item = stack_pop_item(operators);
+        item = stack_top_item(operators);
         if (!apply_operator(item->val[0], item->flags, operands)) {
             error(ERROR_SYNTAX_STACK, NO_COL_NUM, str);
             goto exit;
         }
-        stack_free_item(item);
+        free(stack_pop(operators));
     }
 
     /* Save the final result */
@@ -212,7 +212,7 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
     if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
             || strchr(operand, '.') != strrchr(operand, '.')) {
         error(ERROR_SYNTAX_OPERAND, pos_a, str);
-        return false;
+        goto error;
     }
 
     /* Substitute variables */
@@ -225,12 +225,16 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
             operand = num_to_str(2 * M_PI);
         else if (str[pos_b] != '(') {  /* unknown variable */
             error(ERROR_VAR_UNDEF, pos_a, str);
-            return false;
+            goto error;
         }
     }
 
     stack_push_unalloc(operands, operand, FLAG_NONE);
     return true;
+
+error:
+    free(operand);
+    return false;
 }
 
 /**
@@ -312,10 +316,10 @@ bool apply_stack_operators(char op, bool unary, stack *operands,
                     stack_top_item(operators)->flags, op, unary))
             break;
 
-        item = stack_pop_item(operators);
+        item = stack_top_item(operators);
         if (!apply_operator(item->val[0], item->flags, operands))
             return false;
-        stack_free_item(item);
+        free(stack_pop(operators));
     }
 
     return true;
