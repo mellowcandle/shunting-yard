@@ -30,10 +30,25 @@
 #include <ctype.h>
 #include "shunting-yard.h"
 
-/* Global variables */
 bool sy_quiet = false;  /* suppress error output when true */
-static const int op_order_len = 5;
-static const char *op_order[] = {"^", "*/", "+-%", "=", "("};
+
+static op_t ops[] = {
+    {'^', 6, OP_BINARY},
+
+    {'!', 5, OP_UNARY | OP_POSTFIX},
+    {'+', 4, OP_UNARY | OP_PREFIX},
+    {'-', 4, OP_UNARY | OP_PREFIX},
+
+    {'*', 3, OP_BINARY},
+    {'/', 3, OP_BINARY},
+    {'+', 2, OP_BINARY},
+    {'-', 2, OP_BINARY},
+    {'%', 2, OP_BINARY},
+    {'=', 1, OP_BINARY},
+
+    {'(', 0, OP_NONE},
+    {')', 0, OP_NONE}
+};
 
 /**
  * Parse a string and do the calculations. In the event of an error, will set
@@ -129,7 +144,8 @@ double shunting_yard(char *str) {
                 }
 
                 item = stack_top_item(operators);
-                if (!apply_operator(item->val[0], item->flags, operands)) {
+                if (!apply_operator(get_op(item->val[0], item->flags),
+                            operands)) {
                     /* TODO: accurate column number (currently is just the col
                      * num of the right paren) */
                     error(ERROR_SYNTAX, i, str);
@@ -170,7 +186,7 @@ skip:
     /* End of string - apply any remaining operators on the stack */
     while (!stack_is_empty(operators)) {
         item = stack_top_item(operators);
-        if (!apply_operator(item->val[0], item->flags, operands)) {
+        if (!apply_operator(get_op(item->val[0], item->flags), operands)) {
             error(ERROR_SYNTAX_STACK, NO_COL_NUM, str);
             goto exit;
         }
@@ -240,14 +256,14 @@ error:
 /**
  * Apply an operator to the top 2 operands on the stack.
  */
-bool apply_operator(char op, bool unary, stack *operands) {
-    /* Check for underflow, as it indicates a syntax error */
-    if (stack_is_empty(operands))
+bool apply_operator(op_t *op, stack *operands) {
+    /* Check for null op or underflow, as it indicates a syntax error */
+    if (op == NULL || stack_is_empty(operands))
         return false;
 
     /* Apply a unary operator */
-    if (unary)
-        return apply_unary_operator(op, operands);
+    if (op->type & OP_UNARY)
+        return apply_unary_operator(op->op, operands);
 
     short int flags = FLAG_NONE;
     double result;
@@ -257,7 +273,7 @@ bool apply_operator(char op, bool unary, stack *operands) {
         return false;
     double val1 = strtod_unalloc(stack_pop(operands));
 
-    switch (op) {
+    switch (op->op) {
         case '+': result = val1 + val2; break;
         case '-': result = val1 - val2; break;
         case '*': result = val1 * val2; break;
@@ -312,12 +328,13 @@ bool apply_stack_operators(char op, bool unary, stack *operands,
      * that's of lower precedence (with different rules for unary operators) */
     stack_item *item;
     while (!stack_is_empty(operators)) {
-        if (!compare_operators(*stack_top(operators),
-                    stack_top_item(operators)->flags, op, unary))
+        item = stack_top_item(operators);
+        if (!compare_operators(get_op(item->val[0], item->flags),
+                    get_op(op, unary)))
             break;
 
         item = stack_top_item(operators);
-        if (!apply_operator(item->val[0], item->flags, operands))
+        if (!apply_operator(get_op(item->val[0], item->flags), operands))
             return false;
         free(stack_pop(operators));
     }
@@ -365,25 +382,9 @@ int apply_function(char *func, stack *operands) {
 /**
  * Compares the precedence of two operators.
  */
-int compare_operators(char op1, bool op1_unary, char op2, bool op2_unary) {
-    int op1_rank = -1;
-    int op2_rank = -1;
-
-    /* Loop through operator order and compare */
-    for (int i = 0; i < op_order_len; ++i) {
-        if (strchr(op_order[i], op1)) op1_rank = i;
-        if (strchr(op_order[i], op2)) op2_rank = i;
-    }
-
-    /* Confusingly, unary "-" operators are a special case: -10^2 is evaluated
-     * as -(10^2), but -10*2 is evaluated as (-10)*2. However, this only applies
-     * when it's in the op1 position - if it's in op2, as in 10^-2, then
-     * standard unary order is in effect */
-    if (op1_unary && op1 == '-')
-        --op1_rank;
-
+int compare_operators(op_t *op1, op_t *op2) {
                                    /* unary operators have special precedence */
-    return op1_rank <= op2_rank && (!op2_unary);
+    return op1->prec >= op2->prec && (op2->type == OP_BINARY);
 }
 
 /**
@@ -513,4 +514,15 @@ char *rtrim(char *str) {
     while (isspace(*--end));
     *(end + 1) = '\0';
     return str;
+}
+
+/**
+ * Look up an operator and return its struct.
+ */
+op_t *get_op(char op, bool unary) {
+    for (int i = 0; i < sizeof ops / sizeof ops[0]; ++i)
+        if (ops[i].op == op && unary == (bool)(ops[i].type & OP_UNARY))
+            return &ops[i];
+
+    return NULL;
 }
