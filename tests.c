@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <math.h>
-#include <CUnit/Basic.h>
+#include "CUnit/Basic.h"
 #include "shunting-yard.h"
 
 const double float_precision = 0.000000000001;
