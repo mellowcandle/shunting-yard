@@ -55,7 +55,6 @@
 #define is_numeric(c) ((c >= '0' && c <= '9') || c == '.')
 #define is_alpha(c) ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
 #define is_operand(c) (is_numeric(c) || is_alpha(c))
-#define is_operator(c) (c == '+' || c == '-' || c == '*' || c == '/' \
-        || c == '%' || c == '^' || c == '!' || c == '=')
+#define is_operator(c) (c != '\0' && strchr("+-*/%=^!", c) != NULL)
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
