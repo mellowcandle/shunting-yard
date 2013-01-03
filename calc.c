@@ -1,10 +1,10 @@
 /*
- * Copyright 2011, 2012 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012, 2013 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *     1. Redistributions of source code must retain the above copyright notice,
- *        this list of conditions and the following disclaimer.
+ *     1. Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
  *     2. Redistributions in binary form must reproduce the above copyright
  *        notice, this list of conditions and the following disclaimer in the
  *        documentation and/or other materials provided with the distribution.
@@ -17,8 +17,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     double result = shunting_yard(str);
     free(str);
 
-    if (errno == SUCCESS_EQ) {  /* equations (with "=") */
+    if (errno == SUCCESS_EQ) {  // equations (with "=")
         printf("%s\n", result ? "true" : "false");
         return EXIT_SUCCESS;
     } else if (errno != SUCCESS)
@@ -51,12 +51,12 @@ int main(int argc, char *argv[]) {
  * Concatenate all the arguments passed to the program.
  */
 char *join_argv(int count, char *src[]) {
-    /* Allocate a buffer for the full string */
+    // Allocate a buffer for the full string
     int len = 0;
     for (int i = 0; i < count; ++i)
         len += strlen(src[i]) + 1;
 
-    /* Concatenate the arguments */
+    // Concatenate the arguments
     char *str = calloc(count, len + 1);
     for (int i = 1; i < count; ++i) {
         if (i > 1) strcat(str, " ");

@@ -3,8 +3,8 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *     1. Redistributions of source code must retain the above copyright notice,
- *        this list of conditions and the following disclaimer.
+ *     1. Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
  *     2. Redistributions in binary form must reproduce the above copyright
  *        notice, this list of conditions and the following disclaimer in the
  *        documentation and/or other materials provided with the distribution.
@@ -17,8 +17,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include "shunting-yard.h"
 
-bool sy_quiet = false;  /* suppress error output when true */
+bool sy_quiet = false;  // suppress error output when true
 
 static op_t ops[] = {
     {'^', 6, OP_BINARY},
@@ -62,67 +62,67 @@ double shunting_yard(char *str) {
     stack *functions = stack_alloc();
     stack_item *item;
 
-    /* Loop variables */
+    // Loop variables
     int token_pos = -1;
     int paren_depth = 0;
     char prev_chr = '\0';
     char *operand;
 
-    /* Variables used only for error() - not required for parsing */
+    // Variables used only for error() - not required for parsing
     int error_type = 0;
     int paren_pos = -1;
 
-    /* Loop through expression */
+    // Loop through expression
     for (int i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
-        char chr_str[] = {str[i], '\0'};   /* convert char to char* */
+        char chr_str[] = {str[i], '\0'};    // convert char to char*
 
-        /* Operands */
+        // Operands
         if (is_operand(str[i])) {
             if (token_pos == -1)
                 token_pos = i;
             else if (is_alpha(str[i]) && is_numeric(prev_chr)) {
-                /* Parse expressions like "2a" */
+                // Parse expressions like "2a"
                 if (!push_operand(str, token_pos, i, operands))
                     goto exit;
                 token_pos = i;
 
-                /* Emulate encountering a "*" operator, since "2a" implies "2*a"
-                 */
+                // Emulate encountering a "*" operator, since "2a" implies
+                // "2*a"
                 if (!apply_stack_operators('*', false, operands, operators)) {
                     error(ERROR_SYNTAX, i, str);
                     goto exit;
                 }
                 stack_push(operators, "*", false);
             } else if (is_numeric(str[i]) && is_alpha(prev_chr)) {
-                /* "a2" instead of "2a" is invalid */
+                // "a2" instead of "2a" is invalid
                 error(ERROR_SYNTAX, i, str);
                 goto exit;
             }
 
             goto skip;
-        } else if (token_pos != -1) {   /* end of operand */
+        } else if (token_pos != -1) {   // end of operand
             if (!push_operand(str, token_pos, i, operands))
                 goto exit;
             token_pos = -1;
         }
 
-        /* Operators */
+        // Operators
         if (is_operator(str[i])) {
             bool unary = is_unary(str[i], prev_chr);
 
-            /* Apply any lower precedence operators on the stack first */
+            // Apply any lower precedence operators on the stack first
             if (!apply_stack_operators(str[i], unary, operands, operators)) {
                 error(ERROR_SYNTAX, i, str);
                 goto exit;
             }
 
-            /* Push current operator */
+            // Push current operator
             stack_push(operators, chr_str, unary);
         }
-        /* Parentheses */
+        // Parentheses
         else if (str[i] == '(') {
-            /* Check if this paren is starting a function */
+            // Check if this paren is starting a function
             if (is_operand(prev_chr))
                 stack_push_unalloc(functions, stack_pop(operands), FLAG_NONE);
 
@@ -135,7 +135,7 @@ double shunting_yard(char *str) {
                 goto exit;
             }
 
-            /* Pop and apply operators until we reach the left paren */
+            // Pop and apply operators until we reach the left paren
             while (!stack_is_empty(operators)) {
                 if (stack_top(operators)[0] == '(') {
                     stack_pop_char(operators);
@@ -146,28 +146,28 @@ double shunting_yard(char *str) {
                 item = stack_top_item(operators);
                 if (!apply_operator(get_op(item->val[0], item->flags),
                             operands)) {
-                    /* TODO: accurate column number (currently is just the col
-                     * num of the right paren) */
+                    // TODO: accurate column number (currently is just the col
+                    // num of the right paren)
                     error(ERROR_SYNTAX, i, str);
                     goto exit;
                 }
                 free(stack_pop(operators));
             }
 
-            /* Check if this is the end of a function */
+            // Check if this is the end of a function
             if (!stack_is_empty(functions)) {
                 operand = stack_pop(functions);
                 error_type = apply_function(operand, operands);
                 free(operand);
 
                 if (error_type != SUCCESS) {
-                    /* TODO: accurate column number */
+                    // TODO: accurate column number
                     error(error_type, i, str);
                     goto exit;
                 }
             }
         }
-        /* Unknown character */
+        // Unknown character
         else if (str[i] != '\0' && str[i] != '\n') {
             error(ERROR_UNRECOGNIZED, i, str);
             goto exit;
@@ -183,7 +183,7 @@ skip:
         goto exit;
     }
 
-    /* End of string - apply any remaining operators on the stack */
+    // End of string - apply any remaining operators on the stack
     while (!stack_is_empty(operators)) {
         item = stack_top_item(operators);
         if (!apply_operator(get_op(item->val[0], item->flags), operands)) {
@@ -193,20 +193,20 @@ skip:
         free(stack_pop(operators));
     }
 
-    /* Save the final result */
+    // Save the final result
     if (stack_is_empty(operands))
         error(ERROR_NO_INPUT, NO_COL_NUM, str);
     else {
         item = stack_top_item(operands);
 
-        /* Convert equations into a boolean result */
+        // Convert equations into a boolean result
         if (errno == SUCCESS_EQ)
             result = (item->flags == FLAG_BOOL_TRUE) ? 1 : 0;
         else
             result = strtod(item->val, NULL);
     }
 
-    /* Free memory and return */
+    // Free memory and return
 exit:
     stack_free(operands);
     stack_free(operators);
@@ -220,18 +220,17 @@ exit:
 bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
     char *operand = rtrim(substr(str, pos_a, pos_b - pos_a));
 
-    /* Syntax check. Error if one of the following is true:
-     *     1. Operand ONLY contains "."
-     *     2. Operand contains a space
-     *     3. Operand contains more than one "."
-     */
+    // Syntax check. Error if one of the following is true:
+    //     1. Operand ONLY contains "."
+    //     2. Operand contains a space
+    //     3. Operand contains more than one "."
     if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
             || strchr(operand, '.') != strrchr(operand, '.')) {
         error(ERROR_SYNTAX_OPERAND, pos_a, str);
         goto error;
     }
 
-    /* Substitute variables */
+    // Substitute variables
     if (is_alpha(operand[0])) {
         if (0 == strcasecmp(operand, "e"))
             operand = num_to_str(M_E);
@@ -239,7 +238,7 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
             operand = num_to_str(M_PI);
         else if (0 == strcasecmp(operand, "tau"))
             operand = num_to_str(2 * M_PI);
-        else if (str[pos_b] != '(') {  /* unknown variable */
+        else if (str[pos_b] != '(') {  // unknown variable
             error(ERROR_VAR_UNDEF, pos_a, str);
             goto error;
         }
@@ -257,18 +256,18 @@ error:
  * Apply an operator to the top 2 operands on the stack.
  */
 bool apply_operator(op_t *op, stack *operands) {
-    /* Check for null op or underflow, as it indicates a syntax error */
+    // Check for null op or underflow, as it indicates a syntax error
     if (op == NULL || stack_is_empty(operands))
         return false;
 
-    /* Apply a unary operator */
+    // Apply a unary operator
     if (op->type & OP_UNARY)
         return apply_unary_operator(op->op, operands);
 
     short int flags = FLAG_NONE;
     double result;
     double val2 = strtod_unalloc(stack_pop(operands));
-    /* Check for underflow again before we pop another operand */
+    // Check for underflow again before we pop another operand
     if (stack_is_empty(operands))
         return false;
     double val1 = strtod_unalloc(stack_pop(operands));
@@ -281,20 +280,20 @@ bool apply_operator(op_t *op, stack *operands) {
         case '%': result = fmod(val1, val2); break;
         case '^': result = pow(val1, val2); break;
         case '=':
-            /* Indicate that output is now a boolean instead of a number */
+            // Indicate that output is now a boolean instead of a number
             errno = SUCCESS_EQ;
 
             if (0 == abs(val1 - val2)) {
-                result = val1;  /* operator returns original value */
-                /* This is used instead of simply typecasting the result into a
-                 * bool later on, because that would cause "0=0" to return
-                 * false */
+                result = val1;  // operator returns original value
+                // This is used instead of simply typecasting the result into a
+                // bool later on, because that would cause "0=0" to return
+                // false
                 flags = FLAG_BOOL_TRUE;
             } else
                 result = 0;
 
             break;
-        default: return false;  /* unknown operator */
+        default: return false;  // unknown operator
     }
 
     stack_push_unalloc(operands, num_to_str(result), flags);
@@ -309,10 +308,10 @@ bool apply_unary_operator(char op, stack *operands) {
     double val = strtod_unalloc(stack_pop(operands));
 
     switch (op) {
-        case '+': result = val; break;  /* values are assumed positive */
+        case '+': result = val; break;  // values are assumed positive
         case '-': result = -val; break;
         case '!': result = tgamma(val + 1); break;
-        default: return false;  /* unknown operator */
+        default: return false;  // unknown operator
     }
 
     stack_push_unalloc(operands, num_to_str(result), FLAG_NONE);
@@ -324,8 +323,8 @@ bool apply_unary_operator(char op, stack *operands) {
  */
 bool apply_stack_operators(char op, bool unary, stack *operands,
         stack *operators) {
-    /* Loop through the operator stack and apply operators until we reach one
-     * that's of lower precedence (with different rules for unary operators) */
+    // Loop through the operator stack and apply operators until we reach one
+    // that's of lower precedence (with different rules for unary operators)
     stack_item *item;
     while (!stack_is_empty(operators)) {
         item = stack_top_item(operators);
@@ -347,12 +346,12 @@ bool apply_stack_operators(char op, bool unary, stack *operands,
  * Apply a function with arguments.
  */
 int apply_function(char *func, stack *operands) {
-    /* Function arguments can't be void */
+    // Function arguments can't be void
     if (stack_is_empty(operands))
         return ERROR_FUNC_NOARGS;
 
-    /* Pop the last operand from the stack and use it as the argument. (Only
-     * functions with exactly one argument are allowed.) */
+    // Pop the last operand from the stack and use it as the argument. (Only
+    // functions with exactly one argument are allowed.)
     double arg = strtod_unalloc(stack_pop(operands));
     double result;
 
@@ -385,7 +384,7 @@ int apply_function(char *func, stack *operands) {
 int compare_operators(op_t *op1, op_t *op2) {
     if (op1 == NULL || op2 == NULL)
         return -1;
-                                   /* unary operators have special precedence */
+                                   // unary operators have special precedence
     return op1->prec >= op2->prec && (op2->type == OP_BINARY);
 }
 
@@ -413,7 +412,7 @@ double strtod_unalloc(char *str) {
  */
 void error(int type, int col_num, char *str) {
     errno = type;
-    if (sy_quiet) return;   /* suppress error output */
+    if (sy_quiet) return;   // suppress error output
 
     char error_str[TERM_WIDTH] = "Error: ";
     switch (type) {
@@ -447,11 +446,11 @@ void error(int type, int col_num, char *str) {
             strcat(error_str, "unknown error");
     }
 
-    /* Output excerpt and column marker */
+    // Output excerpt and column marker
     if (col_num != NO_COL_NUM) {
         strcat(error_str, ": ");
 
-        ++col_num;  /* width variables below start at 1, so this should too */
+        ++col_num;  // width variables below start at 1, so this should too
         int total_width = TERM_WIDTH;
         int msg_width = (int)strlen(error_str);
         int avail_width = MIN(total_width - msg_width, strlen(str) * 2);
@@ -480,12 +479,12 @@ char *substr(char *str, int start, int len) {
  * Check if an operator is unary.
  */
 bool is_unary(char op, char prev_chr) {
-    /* Special case for postfix unary operators */
+    // Special case for postfix unary operators
     if (prev_chr == '!' && op != '!')
         return false;
 
-    /* Left paren counts as an operand for prefix operators, and right paren
-     * counts for postfix operators */
+    // Left paren counts as an operand for prefix operators, and right paren
+    // counts for postfix operators
     return is_operator(prev_chr) || prev_chr == '\0' || prev_chr == '('
         || ((is_operand(prev_chr) || prev_chr == ')') && op == '!');
 }

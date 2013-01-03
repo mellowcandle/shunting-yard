@@ -4,8 +4,8 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *     1. Redistributions of source code must retain the above copyright notice,
- *        this list of conditions and the following disclaimer.
+ *     1. Redistributions of source code must retain the above copyright
+ *        notice, this list of conditions and the following disclaimer.
  *     2. Redistributions in binary form must reproduce the above copyright
  *        notice, this list of conditions and the following disclaimer in the
  *        documentation and/or other materials provided with the distribution.
@@ -18,8 +18,8 @@
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdlib.h>
@@ -32,7 +32,8 @@ const double float_precision = 0.000000000001;
 
 #define SY_ASSERT(a, b) CU_ASSERT_DOUBLE_EQUAL(shunting_yard(b), a, \
         float_precision); CU_ASSERT(errno <= SUCCESS); errno = 0
-#define SY_E_ASSERT(a, b) shunting_yard(b); CU_ASSERT_EQUAL(errno, a); errno = 0
+#define SY_E_ASSERT(a, b) shunting_yard(b); CU_ASSERT_EQUAL(errno, a); \
+        errno = 0
 
 void test_add() {
     SY_ASSERT(4, "2+2");
@@ -166,34 +167,34 @@ void test_error() {
 }
 
 int main() {
-    /* Suppress error output from shunting_yard() */
+    // Suppress error output from shunting_yard()
     sy_quiet = true;
 
-    /* Initialize the CUnit test registry */
+    // Initialize the CUnit test registry
     if (CUE_SUCCESS != CU_initialize_registry())
         goto error;
 
-    /* Add a suite to the registry */
-    CU_pSuite pSuite = CU_add_suite("shunting yard", NULL, NULL);
-    if (NULL == pSuite)
+    // Add a suite to the registry
+    CU_pSuite suite = CU_add_suite("shunting yard", NULL, NULL);
+    if (suite == NULL)
         goto cleanup;
 
-    /* Add the tests to the suite (run in order) */
-    if ((NULL == CU_add_test(pSuite, "addition", test_add)) ||
-            (NULL == CU_add_test(pSuite, "subtraction", test_subtract)) ||
-            (NULL == CU_add_test(pSuite, "multiplication", test_multiply)) ||
-            (NULL == CU_add_test(pSuite, "division", test_divide)) ||
-            (NULL == CU_add_test(pSuite, "modulus", test_mod)) ||
-            (NULL == CU_add_test(pSuite, "exponents", test_exponent)) ||
-            (NULL == CU_add_test(pSuite, "factorials", test_factorial)) ||
-            (NULL == CU_add_test(pSuite, "functions", test_function)) ||
-            (NULL == CU_add_test(pSuite, "variables", test_variable)) ||
-            (NULL == CU_add_test(pSuite, "equality", test_equal)) ||
-            (NULL == CU_add_test(pSuite, "order of operations", test_order)) ||
-            (NULL == CU_add_test(pSuite, "error handling", test_error)))
+    // Add the tests to the suite (run in order)
+    if ((CU_add_test(suite, "addition", test_add)                   == NULL) ||
+            (CU_add_test(suite, "subtraction", test_subtract)       == NULL) ||
+            (CU_add_test(suite, "multiplication", test_multiply)    == NULL) ||
+            (CU_add_test(suite, "division", test_divide)            == NULL) ||
+            (CU_add_test(suite, "modulus", test_mod)                == NULL) ||
+            (CU_add_test(suite, "exponents", test_exponent)         == NULL) ||
+            (CU_add_test(suite, "factorials", test_factorial)       == NULL) ||
+            (CU_add_test(suite, "functions", test_function)         == NULL) ||
+            (CU_add_test(suite, "variables", test_variable)         == NULL) ||
+            (CU_add_test(suite, "equality", test_equal)             == NULL) ||
+            (CU_add_test(suite, "order of operations", test_order)  == NULL) ||
+            (CU_add_test(suite, "error handling", test_error)       == NULL))
         goto cleanup;
 
-    /* Run all tests using the CUnit Basic interface */
+    // Run all tests using the CUnit Basic interface
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
 cleanup:
