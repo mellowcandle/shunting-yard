@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Brian Marshall. All rights reserved.
+ * Copyright 2012, 2013 Brian Marshall. All rights reserved.
  * Based on CUnit example code: <http://cunit.sourceforge.net/example.html>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -150,6 +150,7 @@ void test_order() {
 
 void test_error() {
     SY_E_ASSERT(ERROR_SYNTAX, "a2");
+    SY_E_ASSERT(ERROR_SYNTAX, "2**2");
     SY_E_ASSERT(ERROR_SYNTAX_STACK, "*1");
     SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*.");
     SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*2 3");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2012 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012, 2013 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -383,6 +383,8 @@ int apply_function(char *func, stack *operands) {
  * Compares the precedence of two operators.
  */
 int compare_operators(op_t *op1, op_t *op2) {
+    if (op1 == NULL || op2 == NULL)
+        return -1;
                                    /* unary operators have special precedence */
     return op1->prec >= op2->prec && (op2->type == OP_BINARY);
 }
