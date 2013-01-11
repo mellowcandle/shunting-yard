@@ -36,7 +36,7 @@
 #define ERROR_NO_INPUT        7
 #define ERROR_FUNC_UNDEF      8
 #define ERROR_FUNC_NOARGS     9
-#define ERROR_VAR_UNDEF       10
+#define ERROR_CONST_UNDEF     10
 
 // Stack flags
 #define FLAG_NONE       0

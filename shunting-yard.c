@@ -215,7 +215,7 @@ exit:
 }
 
 /**
- * Push an operand onto the stack and substitute any variables.
+ * Push an operand onto the stack and substitute any constants.
  */
 bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
     char *operand = rtrim(substr(str, pos_a, pos_b - pos_a));
@@ -230,7 +230,7 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
         goto error;
     }
 
-    // Substitute variables
+    // Substitute constants
     if (is_alpha(operand[0])) {
         if (0 == strcasecmp(operand, "e"))
             operand = num_to_str(M_E);
@@ -238,8 +238,8 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
             operand = num_to_str(M_PI);
         else if (0 == strcasecmp(operand, "tau"))
             operand = num_to_str(2 * M_PI);
-        else if (str[pos_b] != '(') {  // unknown variable
-            error(ERROR_VAR_UNDEF, pos_a, str);
+        else if (str[pos_b] != '(') {  // unknown constant
+            error(ERROR_CONST_UNDEF, pos_a, str);
             goto error;
         }
     }
@@ -439,8 +439,8 @@ void error(int type, int col_num, char *str) {
         case ERROR_FUNC_NOARGS:
             strcat(error_str, "function requires arguments");
             break;
-        case ERROR_VAR_UNDEF:
-            strcat(error_str, "undefined variable");
+        case ERROR_CONST_UNDEF:
+            strcat(error_str, "undefined constant");
             break;
         default:
             strcat(error_str, "unknown error");

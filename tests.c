@@ -163,7 +163,7 @@ void test_error() {
     SY_E_ASSERT(ERROR_NO_INPUT, "       ");
     SY_E_ASSERT(ERROR_FUNC_UNDEF, "foo(2)");
     SY_E_ASSERT(ERROR_FUNC_NOARGS, "sqrt()");
-    SY_E_ASSERT(ERROR_VAR_UNDEF, "foo");
+    SY_E_ASSERT(ERROR_CONST_UNDEF, "foo");
 }
 
 int main() {
