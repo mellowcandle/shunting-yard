@@ -73,7 +73,7 @@ double shunting_yard(char *str) {
     int paren_pos = -1;
 
     // Loop through expression
-    for (int i = 0; i <= strlen(str); ++i) {
+    for (size_t i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
         char chr_str[] = {str[i], '\0'};    // convert char to char*
 
@@ -453,7 +453,7 @@ void error(int type, int col_num, char *str) {
         ++col_num;  // width variables below start at 1, so this should too
         int total_width = TERM_WIDTH;
         int msg_width = (int)strlen(error_str);
-        int avail_width = MIN(total_width - msg_width, strlen(str) * 2);
+        int avail_width = MIN(total_width - msg_width, (int)strlen(str) * 2);
         int substr_start = MAX(col_num - avail_width / 2, 0);
 
         char *excerpt = substr(str, substr_start, avail_width);
@@ -467,7 +467,7 @@ void error(int type, int col_num, char *str) {
 /**
  * Return a substring.
  */
-char *substr(char *str, int start, int len) {
+char *substr(char *str, int start, size_t len) {
     char *substr = malloc(len + 1);
     memcpy(substr, str + start, len);
     substr[len] = '\0';
@@ -521,7 +521,7 @@ char *rtrim(char *str) {
  * Look up an operator and return its struct.
  */
 op_t *get_op(char op, bool unary) {
-    for (int i = 0; i < sizeof ops / sizeof ops[0]; ++i)
+    for (size_t i = 0; i < sizeof ops / sizeof ops[0]; ++i)
         if (ops[i].op == op && unary == (bool)(ops[i].type & OP_UNARY))
             return &ops[i];
 

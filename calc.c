@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 #include "shunting-yard.h"
 
 char *join_argv(int count, char *src[]);

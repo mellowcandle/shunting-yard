@@ -47,7 +47,7 @@ int compare_operators(op_t *op1, op_t *op2);
 char *num_to_str(double num);
 double strtod_unalloc(char *str);
 void error(int type, int col_num, char *str);
-char *substr(char *str, int start, int len);
+char *substr(char *str, int start, size_t len);
 bool is_unary(char op, char prev_chr);
 char *trim_double(double num);
 char *rtrim(char *str);

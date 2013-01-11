@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2012 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012, 2013 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +28,13 @@
 #include "stack.h"
 
 stack *stack_alloc() {
-    stack *list = malloc(sizeof(stack));
-    memset(list, 0, sizeof(stack));
+    stack *list = malloc(sizeof (stack));
+    memset(list, 0, sizeof (stack));
     return list;
 }
 
 void stack_push(stack *list, char *val, short int flags) {
-    list->current = malloc(sizeof(stack_item));
+    list->current = malloc(sizeof (stack_item));
     list->current->val = strdup(val);
     list->current->flags = flags;
     list->current->next = (struct stack_item *)list->top;

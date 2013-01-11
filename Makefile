@@ -1,5 +1,5 @@
-CC = $(shell basename `which clang 2> /dev/null || echo gcc`)
-CFLAGS = -std=c99 -D_BSD_SOURCE -lm
+CC = gcc
+CFLAGS = -std=c99 -pedantic -Wall -Wextra -Werror -D_BSD_SOURCE -lm
 TEST_CFLAGS = -I/usr/local/include -L/usr/local/lib
 FILES = shunting-yard.c stack.c
 
