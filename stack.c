@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2012, 2013 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012, 2013, 2014 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,11 +21,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
 #include "stack.h"
+
+#include <stdlib.h>
+#include <string.h>
 
 stack *stack_alloc() {
     stack *list = malloc(sizeof (stack));
@@ -51,7 +50,6 @@ void stack_push_unalloc(stack *list, char *val, short int flags) {
  */
 char *stack_pop(stack *list) {
     stack_item *item = stack_pop_item(list);
-
     char *val = strdup(item->val);
     stack_free_item(item);
     return val;
@@ -62,14 +60,11 @@ char *stack_pop(stack *list) {
  * flags).
  */
 stack_item *stack_pop_item(stack *list) {
-    if (stack_is_empty(list)) {
-        printf("Stack underflow\n");
+    if (stack_is_empty(list))
         return NULL;
-    }
 
     stack_item *item = list->top;
     list->top = (stack_item *)list->top->next;
-
     return item;
 }
 
@@ -81,7 +76,6 @@ char stack_pop_char(stack *list) {
     char *val = stack_pop(list);
     char val_char = val[0];
     free(val);
-
     return val_char;
 }
 
@@ -99,16 +93,6 @@ stack_item *stack_top_item(stack *list) {
     return list->top;
 }
 
-void stack_display(stack *list) {
-    stack_item *p = list->top;
-    while (p != NULL) {
-        printf("%s ", p->val);
-        p = (stack_item *)p->next;
-    }
-
-    printf("\n");
-}
-
 bool stack_is_empty(stack *list) {
     stack_item *p = list->top;
     return (bool)(p == NULL);
@@ -120,7 +104,6 @@ void stack_free(stack *list) {
         p = (stack_item *)p->next;
         free(stack_pop(list));
     }
-
     free(list);
 }
 

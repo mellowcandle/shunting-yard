@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2012, 2013 Brian Marshall. All rights reserved.
+ * Copyright 2011, 2012, 2013, 2014 Brian Marshall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -21,6 +21,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdbool.h>
+
 typedef struct {
     char *val;
     short int flags;
@@ -40,7 +42,6 @@ stack_item *stack_pop_item(stack *list);
 char stack_pop_char(stack *list);
 char *stack_top(stack *list);
 stack_item *stack_top_item(stack *list);
-void stack_display(stack *list);
 bool stack_is_empty(stack *list);
 void stack_free(stack *list);
 void stack_free_item(stack_item *item);
