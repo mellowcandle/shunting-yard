@@ -1,17 +1,23 @@
 CC = gcc
-CFLAGS = -std=c99 -pedantic -Wall -Wextra -Werror -D_BSD_SOURCE -lm
-TEST_CFLAGS = -I/usr/local/include -L/usr/local/lib
-FILES = shunting-yard.c stack.c
+SOURCES = shunting-yard.c stack.c
+DEPS = shunting-yard.h stack.h
+CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -Werror -D_BSD_SOURCE
+LDFLAGS = -lm
 
-all:
-	$(CC) $(CFLAGS) -o calc -O2 $(FILES) calc.c
+.PHONY: all debug clean
 
-debug:
-	$(CC) $(CFLAGS) -o calc -O0 -g $(FILES) calc.c
+all: calc
 
-test:
-	$(CC) $(CFLAGS) $(TEST_CFLAGS) -lcunit -o tests $(FILES) tests.c
-	@./tests
+debug: CFLAGS += -O0 -g
+debug: calc
 
 clean:
 	rm -f calc tests
+
+calc: SOURCES += calc.c
+calc: $(DEPS) $(SOURCES)
+	$(CC) $(CFLAGS) -o $@ -O2 $(SOURCES) $(LDFLAGS)
+
+tests: SOURCES += tests.c
+tests: $(DEPS) $(SOURCES)
+	$(CC) $(CFLAGS) -o $@ $(SOURCES) $(LDFLAGS) -lcunit
