@@ -396,8 +396,8 @@ void error(int type, int col_num, char *str) {
             strcat(error_str, "unrecognized character");
             break;
         case ERROR_NO_INPUT:
-            fprintf(stderr, "This is a calculator - provide some math!\n");
-            return;
+            strcat(error_str, "empty expression");
+            break;
         case ERROR_FUNC_UNDEF:
             strcat(error_str, "undefined function");
             break;

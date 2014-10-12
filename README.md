@@ -8,10 +8,15 @@ though (`make test`).
 
 Usage is simple:
 
-    $ ./calc 2 + 2
+    $ ./calc 2+2
     4
     $ ./calc 2^3
     8
+    $ ./calc 2+2 2^3
+    4
+    8
+    $ ./calc "2 + 2"
+    4
 
 A number of common math functions and constants are supported: abs(), sqrt(),
 ln(), lb(), lg() or log(), cos(), sin(), tan(), pi, tau, and e.
