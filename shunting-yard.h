@@ -25,5 +25,4 @@ double strtod_unalloc(const char *str);
 void error(int type, int col_num, char *str);
 char *substr(char *str, int start, size_t len);
 bool is_unary(char op, char prev_chr);
-char *trim_double(double num);
 char *rtrim(char *str);

@@ -22,11 +22,8 @@ int main(int argc, char *argv[]) {
             printf("True\n");
         else if (errno == SUCCESS_NOT_EQUAL)
             printf("False\n");
-        else {
-            char *result_string = trim_double(result);
-            printf("%s\n", result_string);
-            free(result_string);
-        }
+        else
+            printf("%.16g\n", result);
     }
     return EXIT_SUCCESS;
 }

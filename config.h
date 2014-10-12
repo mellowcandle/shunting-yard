@@ -27,8 +27,6 @@
 // Size of string to hold a hexadecimal representation of double precision
 // floating point numbers
 #define DOUBLE_STR_LEN 32
-// Number of digits before showing scientific notation
-#define MIN_E_DIGITS   12
 
 // Convenience functions
 #define is_numeric(c) ((c >= '0' && c <= '9') || c == '.')

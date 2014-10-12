@@ -7,7 +7,6 @@
 #include "shunting-yard.h"
 
 #include <ctype.h>
-#include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -452,24 +451,6 @@ bool is_unary(char op, char prev_chr) {
     // counts for postfix operators
     return is_operator(prev_chr) || prev_chr == '\0' || prev_chr == '('
         || ((is_operand(prev_chr) || prev_chr == ')') && op == '!');
-}
-
-/**
- * Remove trailing zeroes from a double and return it as a string.
- */
-char *trim_double(double num) {
-    char *str = malloc(DECIMAL_DIG + 1);
-    snprintf(str, DECIMAL_DIG + 1,
-            num >= pow(10, MIN_E_DIGITS) ? "%.*e" : "%.*f", MIN_E_DIGITS, num);
-
-    for (int i = strlen(str) - 1; i > 0; --i) {
-        if (str[i] == '.') str[i] = '\0';
-        if (str[i] != '0') break;
-
-        str[i] = '\0';
-    }
-
-    return str;
 }
 
 /**
