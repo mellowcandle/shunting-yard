@@ -5,11 +5,14 @@
 //
 // Based on CUnit example code: <http://cunit.sourceforge.net/example.html>.
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <math.h>
-#include "CUnit/Basic.h"
+#include "config.h"
 #include "shunting-yard.h"
+
+#include <CUnit/Basic.h>
+
+#include <math.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
 const double float_precision = 0.000000000001;
 
@@ -135,7 +138,7 @@ void test_order() {
 void test_error() {
     SY_E_ASSERT(ERROR_SYNTAX, "a2");
     SY_E_ASSERT(ERROR_SYNTAX, "2**2");
-    SY_E_ASSERT(ERROR_SYNTAX_STACK, "*1");
+    SY_E_ASSERT(ERROR_SYNTAX, "*1");
     SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*.");
     SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*2 3");
     SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*2.3.4");

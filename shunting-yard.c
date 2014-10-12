@@ -3,34 +3,47 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
-#include <stdlib.h>
+#include "config.h"
+#include "shunting-yard.h"
+
+#include <ctype.h>
+#include <float.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
-#include <math.h>
-#include <float.h>
-#include <ctype.h>
-#include "shunting-yard.h"
 
 bool sy_quiet = false;  // suppress error output when true
 
-static op_t ops[] = {
-    {'^', 6, OP_BINARY},
-
-    {'!', 5, OP_UNARY | OP_POSTFIX},
-    {'+', 4, OP_UNARY | OP_PREFIX},
-    {'-', 4, OP_UNARY | OP_PREFIX},
-
-    {'*', 3, OP_BINARY},
-    {'/', 3, OP_BINARY},
-    {'+', 2, OP_BINARY},
-    {'-', 2, OP_BINARY},
-    {'%', 2, OP_BINARY},
-    {'=', 1, OP_BINARY},
-
-    {'(', 0, OP_NONE},
-    {')', 0, OP_NONE}
+struct Operator {
+    char symbol;
+    int precedence;
+    bool unary;
 };
+
+static const Operator OPERATORS[] = {
+    {'!', 1, true},
+    {'^', 2, false},
+    {'+', 3, true},
+    {'-', 3, true},
+    {'*', 4, false},
+    {'/', 4, false},
+    {'%', 4, false},
+    {'+', 5, false},
+    {'-', 5, false},
+    {'=', 6, false},
+    {'(', 7, false},
+    {')', 7, false}
+};
+
+// Returns a matching operator.
+static const Operator *get_operator(char symbol, bool unary) {
+    for (size_t i = 0; i < sizeof OPERATORS / sizeof (Operator); i++) {
+        if (OPERATORS[i].symbol == symbol && OPERATORS[i].unary == unary)
+            return &OPERATORS[i];
+    }
+    return NULL;
+}
 
 /**
  * Parse a string and do the calculations. In the event of an error, will set
@@ -69,12 +82,12 @@ double shunting_yard(char *str) {
 
                 // Emulate encountering a "*" operator, since "2a" implies
                 // "2*a"
-                if (!apply_stack_operators('*', false, &operands,
-                        &operators)) {
+                if (!apply_stack_operators(&operators, &operands,
+                        get_operator('*', false))) {
                     error(ERROR_SYNTAX, i, str);
                     goto exit;
                 }
-                stack_push(&operators, get_op('*', false));
+                stack_push(&operators, get_operator('*', false));
             } else if (is_numeric(str[i]) && is_alpha(prev_chr)) {
                 // "a2" instead of "2a" is invalid
                 error(ERROR_SYNTAX, i, str);
@@ -93,13 +106,14 @@ double shunting_yard(char *str) {
             bool unary = is_unary(str[i], prev_chr);
 
             // Apply any lower precedence operators on the stack first
-            if (!apply_stack_operators(str[i], unary, &operands, &operators)) {
+            if (!apply_stack_operators(&operators, &operands,
+                    get_operator(str[i], unary))) {
                 error(ERROR_SYNTAX, i, str);
                 goto exit;
             }
 
             // Push current operator
-            stack_push(&operators, get_op(str[i], unary));
+            stack_push(&operators, get_operator(str[i], unary));
         }
         // Parentheses
         else if (str[i] == '(') {
@@ -107,7 +121,7 @@ double shunting_yard(char *str) {
             if (is_operand(prev_chr))
                 stack_push(&functions, stack_pop(&operands));
 
-            stack_push(&operators, get_op(str[i], false));
+            stack_push(&operators, get_operator(str[i], false));
             ++paren_depth;
             if (paren_depth == 1) paren_pos = i;
         } else if (str[i] == ')') {
@@ -118,7 +132,7 @@ double shunting_yard(char *str) {
 
             // Pop and apply operators until we reach the left paren
             while (operators != NULL) {
-                if (((op_t *)stack_top(operators))->op == '(') {
+                if (((const Operator *)stack_top(operators))->symbol == '(') {
                     stack_pop(&operators);
                     --paren_depth;
                     break;
@@ -227,14 +241,13 @@ error:
 /**
  * Apply an operator to the top 2 operands on the stack.
  */
-bool apply_operator(op_t *op, Stack **operands) {
+bool apply_operator(const Operator *operator, Stack **operands) {
     // Check for null op or underflow, as it indicates a syntax error
-    if (op == NULL || *operands == NULL)
+    if (operator == NULL || *operands == NULL)
         return false;
 
-    // Apply a unary operator
-    if (op->type & OP_UNARY)
-        return apply_unary_operator(op->op, operands);
+    if (operator->unary)
+        return apply_unary_operator(operator->symbol, operands);
 
     double result;
     double val2 = strtod_unalloc(stack_pop(operands));
@@ -243,7 +256,7 @@ bool apply_operator(op_t *op, Stack **operands) {
         return false;
     double val1 = strtod_unalloc(stack_pop(operands));
 
-    switch (op->op) {
+    switch (operator->symbol) {
         case '+': result = val1 + val2; break;
         case '-': result = val1 - val2; break;
         case '*': result = val1 * val2; break;
@@ -287,20 +300,22 @@ bool apply_unary_operator(char op, Stack **operands) {
 /**
  * Apply one or more operators currently on the stack.
  */
-bool apply_stack_operators(char op, bool unary, Stack **operands,
-        Stack **operators) {
+bool apply_stack_operators(Stack **operators, Stack **operands,
+        const Operator *new_operator) {
+    if (new_operator == NULL)
+        return false;
+
     // Loop through the operator stack and apply operators until we reach one
     // that's of lower precedence (with different rules for unary operators)
     while (*operators != NULL) {
-        if (!compare_operators(stack_top(*operators), get_op(op, unary)))
+        if (((const Operator *)stack_top(*operators))->precedence >
+                new_operator->precedence || new_operator->unary)
             break;
         if (!apply_operator(stack_pop(operators), operands))
             return false;
     }
-
     return true;
 }
-
 
 /**
  * Apply a function with arguments.
@@ -336,16 +351,6 @@ int apply_function(const char *func, Stack **operands) {
 
     stack_push(operands, num_to_str(result));
     return SUCCESS;
-}
-
-/**
- * Compares the precedence of two operators.
- */
-int compare_operators(op_t *op1, op_t *op2) {
-    if (op1 == NULL || op2 == NULL)
-        return -1;
-                                   // unary operators have special precedence
-    return op1->prec >= op2->prec && (op2->type == OP_BINARY);
 }
 
 /**
@@ -475,15 +480,4 @@ char *rtrim(char *str) {
     while (isspace(*--end));
     *(end + 1) = '\0';
     return str;
-}
-
-/**
- * Look up an operator and return its struct.
- */
-op_t *get_op(char op, bool unary) {
-    for (size_t i = 0; i < sizeof ops / sizeof ops[0]; ++i)
-        if (ops[i].op == op && unary == (bool)(ops[i].type & OP_UNARY))
-            return &ops[i];
-
-    return NULL;
 }

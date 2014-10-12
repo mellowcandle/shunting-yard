@@ -1,12 +1,14 @@
-// Copyright 2011 - 2013 Brian Marshall. All rights reserved.
+// Copyright 2011 - 2014 Brian Marshall. All rights reserved.
 //
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "config.h"
 #include "shunting-yard.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 char *join_argv(int count, char *src[]);
 
