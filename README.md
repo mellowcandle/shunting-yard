@@ -3,8 +3,8 @@ command-line calculator written from scratch that implements the [shunting-yard
 algorithm][1] to parse input.
 
 Compiling should be as simple as running `make` with the C standard library
-development headers installed. You need CUnit headers to run the unit tests,
-though (`make test`).
+development headers installed. You need CUnit headers to compile the unit
+tests, though (`make tests`).
 
 Usage is simple:
 
