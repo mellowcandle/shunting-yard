@@ -1,4 +1,4 @@
-// Copyright 2012 - 2013 Brian Marshall. All rights reserved.
+// Copyright 2012 - 2014 Brian Marshall. All rights reserved.
 //
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
@@ -107,15 +107,15 @@ void test_variable() {
 }
 
 void test_equal() {
-    SY_ASSERT(1, "2=2");
-    SY_ASSERT(0, "1=2");
-    SY_ASSERT(1, "0=0");
-    SY_ASSERT(1, "(2=2)");
-    SY_ASSERT(1, "2=2=2");
-    SY_ASSERT(0, "2=1=2");
-    SY_ASSERT(1, "5+3=2+6=10-2");
-    SY_ASSERT(0, "5+3=1+6=10-2");
-    SY_ASSERT(1, "(2+3)=(1+4)=5");
+    SY_E_ASSERT(SUCCESS_EQUAL, "2=2");
+    SY_E_ASSERT(SUCCESS_NOT_EQUAL, "1=2");
+    SY_E_ASSERT(SUCCESS_EQUAL, "0=0");
+    SY_E_ASSERT(SUCCESS_EQUAL, "(2=2)");
+    SY_E_ASSERT(SUCCESS_EQUAL, "2=2=2");
+    SY_E_ASSERT(SUCCESS_NOT_EQUAL, "2=1=2");
+    SY_E_ASSERT(SUCCESS_EQUAL, "5+3=2+6=10-2");
+    SY_E_ASSERT(SUCCESS_NOT_EQUAL, "5+3=1+6=10-2");
+    SY_E_ASSERT(SUCCESS_EQUAL, "(2+3)=(1+4)=5");
 }
 
 void test_order() {

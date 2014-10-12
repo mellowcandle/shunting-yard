@@ -1,4 +1,4 @@
-// Copyright 2011 - 2012 Brian Marshall. All rights reserved.
+// Copyright 2011 - 2012, 2014 Brian Marshall. All rights reserved.
 //
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
@@ -19,15 +19,15 @@ typedef struct {
 extern bool sy_quiet;
 
 double shunting_yard(char *str);
-bool push_operand(char *str, int pos_a, int pos_b, stack *operands);
-bool apply_operator(op_t *op, stack *operands);
-bool apply_unary_operator(char op, stack *operands);
-bool apply_stack_operators(char op, bool unary, stack *operands,
-        stack *operators);
-int apply_function(char *func, stack *args);
+bool push_operand(char *str, int pos_a, int pos_b, Stack **operands);
+bool apply_operator(op_t *op, Stack **operands);
+bool apply_unary_operator(char op, Stack **operands);
+bool apply_stack_operators(char op, bool unary, Stack **operands,
+        Stack **operators);
+int apply_function(const char *func, Stack **args);
 int compare_operators(op_t *op1, op_t *op2);
 char *num_to_str(double num);
-double strtod_unalloc(char *str);
+double strtod_unalloc(const char *str);
 void error(int type, int col_num, char *str);
 char *substr(char *str, int start, size_t len);
 bool is_unary(char op, char prev_chr);

@@ -1,4 +1,4 @@
-// Copyright 2011 - 2013 Brian Marshall. All rights reserved.
+// Copyright 2011 - 2014 Brian Marshall. All rights reserved.
 //
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
@@ -39,16 +39,15 @@ static op_t ops[] = {
 double shunting_yard(char *str) {
     errno = 0;
     double result = 0;
-    stack *operands = stack_alloc();
-    stack *operators = stack_alloc();
-    stack *functions = stack_alloc();
-    stack_item *item;
+    Stack *operands = NULL;
+    Stack *operators = NULL;
+    Stack *functions = NULL;
 
     // Loop variables
     int token_pos = -1;
     int paren_depth = 0;
     char prev_chr = '\0';
-    char *operand;
+    const char *operand;
 
     // Variables used only for error() - not required for parsing
     int error_type = 0;
@@ -57,7 +56,6 @@ double shunting_yard(char *str) {
     // Loop through expression
     for (size_t i = 0; i <= strlen(str); ++i) {
         if (str[i] == ' ') continue;
-        char chr_str[] = {str[i], '\0'};    // convert char to char*
 
         // Operands
         if (is_operand(str[i])) {
@@ -65,17 +63,18 @@ double shunting_yard(char *str) {
                 token_pos = i;
             else if (is_alpha(str[i]) && is_numeric(prev_chr)) {
                 // Parse expressions like "2a"
-                if (!push_operand(str, token_pos, i, operands))
+                if (!push_operand(str, token_pos, i, &operands))
                     goto exit;
                 token_pos = i;
 
                 // Emulate encountering a "*" operator, since "2a" implies
                 // "2*a"
-                if (!apply_stack_operators('*', false, operands, operators)) {
+                if (!apply_stack_operators('*', false, &operands,
+                        &operators)) {
                     error(ERROR_SYNTAX, i, str);
                     goto exit;
                 }
-                stack_push(operators, "*", false);
+                stack_push(&operators, get_op('*', false));
             } else if (is_numeric(str[i]) && is_alpha(prev_chr)) {
                 // "a2" instead of "2a" is invalid
                 error(ERROR_SYNTAX, i, str);
@@ -84,7 +83,7 @@ double shunting_yard(char *str) {
 
             goto skip;
         } else if (token_pos != -1) {   // end of operand
-            if (!push_operand(str, token_pos, i, operands))
+            if (!push_operand(str, token_pos, i, &operands))
                 goto exit;
             token_pos = -1;
         }
@@ -94,21 +93,21 @@ double shunting_yard(char *str) {
             bool unary = is_unary(str[i], prev_chr);
 
             // Apply any lower precedence operators on the stack first
-            if (!apply_stack_operators(str[i], unary, operands, operators)) {
+            if (!apply_stack_operators(str[i], unary, &operands, &operators)) {
                 error(ERROR_SYNTAX, i, str);
                 goto exit;
             }
 
             // Push current operator
-            stack_push(operators, chr_str, unary);
+            stack_push(&operators, get_op(str[i], unary));
         }
         // Parentheses
         else if (str[i] == '(') {
             // Check if this paren is starting a function
             if (is_operand(prev_chr))
-                stack_push_unalloc(functions, stack_pop(operands), FLAG_NONE);
+                stack_push(&functions, stack_pop(&operands));
 
-            stack_push(operators, chr_str, 0);
+            stack_push(&operators, get_op(str[i], false));
             ++paren_depth;
             if (paren_depth == 1) paren_pos = i;
         } else if (str[i] == ')') {
@@ -118,29 +117,26 @@ double shunting_yard(char *str) {
             }
 
             // Pop and apply operators until we reach the left paren
-            while (!stack_is_empty(operators)) {
-                if (stack_top(operators)[0] == '(') {
-                    stack_pop_char(operators);
+            while (operators != NULL) {
+                if (((op_t *)stack_top(operators))->op == '(') {
+                    stack_pop(&operators);
                     --paren_depth;
                     break;
                 }
 
-                item = stack_top_item(operators);
-                if (!apply_operator(get_op(item->val[0], item->flags),
-                            operands)) {
+                if (!apply_operator(stack_pop(&operators), &operands)) {
                     // TODO: accurate column number (currently is just the col
                     // num of the right paren)
                     error(ERROR_SYNTAX, i, str);
                     goto exit;
                 }
-                free(stack_pop(operators));
             }
 
             // Check if this is the end of a function
-            if (!stack_is_empty(functions)) {
-                operand = stack_pop(functions);
-                error_type = apply_function(operand, operands);
-                free(operand);
+            if (functions != NULL) {
+                operand = stack_pop(&functions);
+                error_type = apply_function(operand, &operands);
+                free((void *)operand);
 
                 if (error_type != SUCCESS) {
                     // TODO: accurate column number
@@ -166,40 +162,34 @@ skip:
     }
 
     // End of string - apply any remaining operators on the stack
-    while (!stack_is_empty(operators)) {
-        item = stack_top_item(operators);
-        if (!apply_operator(get_op(item->val[0], item->flags), operands)) {
+    while (operators != NULL) {
+        if (!apply_operator(stack_pop(&operators), &operands)) {
             error(ERROR_SYNTAX_STACK, NO_COL_NUM, str);
             goto exit;
         }
-        free(stack_pop(operators));
     }
 
     // Save the final result
-    if (stack_is_empty(operands))
+    if (operands == NULL)
         error(ERROR_NO_INPUT, NO_COL_NUM, str);
-    else {
-        item = stack_top_item(operands);
+    else
+        result = strtod_unalloc(stack_pop(&operands));
 
-        // Convert equations into a boolean result
-        if (errno == SUCCESS_EQ)
-            result = (item->flags == FLAG_BOOL_TRUE) ? 1 : 0;
-        else
-            result = strtod(item->val, NULL);
-    }
-
-    // Free memory and return
 exit:
-    stack_free(operands);
-    stack_free(operators);
-    stack_free(functions);
+    // Free memory and return
+    while (operands != NULL)
+        free((void *)stack_pop(&operands));
+    while (operators != NULL)
+        stack_pop(&operators);
+    while (functions != NULL)
+        free((void *)stack_pop(&functions));
     return result;
 }
 
 /**
  * Push an operand onto the stack and substitute any constants.
  */
-bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
+bool push_operand(char *str, int pos_a, int pos_b, Stack **operands) {
     char *operand = rtrim(substr(str, pos_a, pos_b - pos_a));
 
     // Syntax check. Error if one of the following is true:
@@ -226,7 +216,7 @@ bool push_operand(char *str, int pos_a, int pos_b, stack *operands) {
         }
     }
 
-    stack_push_unalloc(operands, operand, FLAG_NONE);
+    stack_push(operands, operand);
     return true;
 
 error:
@@ -237,20 +227,19 @@ error:
 /**
  * Apply an operator to the top 2 operands on the stack.
  */
-bool apply_operator(op_t *op, stack *operands) {
+bool apply_operator(op_t *op, Stack **operands) {
     // Check for null op or underflow, as it indicates a syntax error
-    if (op == NULL || stack_is_empty(operands))
+    if (op == NULL || *operands == NULL)
         return false;
 
     // Apply a unary operator
     if (op->type & OP_UNARY)
         return apply_unary_operator(op->op, operands);
 
-    short int flags = FLAG_NONE;
     double result;
     double val2 = strtod_unalloc(stack_pop(operands));
     // Check for underflow again before we pop another operand
-    if (stack_is_empty(operands))
+    if (*operands == NULL)
         return false;
     double val1 = strtod_unalloc(stack_pop(operands));
 
@@ -262,30 +251,25 @@ bool apply_operator(op_t *op, stack *operands) {
         case '%': result = fmod(val1, val2); break;
         case '^': result = pow(val1, val2); break;
         case '=':
-            // Indicate that output is now a boolean instead of a number
-            errno = SUCCESS_EQ;
-
             if (0 == abs(val1 - val2)) {
+                errno = SUCCESS_EQUAL;
                 result = val1;  // operator returns original value
-                // This is used instead of simply typecasting the result into a
-                // bool later on, because that would cause "0=0" to return
-                // false
-                flags = FLAG_BOOL_TRUE;
-            } else
+            } else {
+                errno = SUCCESS_NOT_EQUAL;
                 result = 0;
-
+            }
             break;
         default: return false;  // unknown operator
     }
 
-    stack_push_unalloc(operands, num_to_str(result), flags);
+    stack_push(operands, num_to_str(result));
     return true;
 }
 
 /**
  * Apply a unary operator to the stack.
  */
-bool apply_unary_operator(char op, stack *operands) {
+bool apply_unary_operator(char op, Stack **operands) {
     double result;
     double val = strtod_unalloc(stack_pop(operands));
 
@@ -296,28 +280,22 @@ bool apply_unary_operator(char op, stack *operands) {
         default: return false;  // unknown operator
     }
 
-    stack_push_unalloc(operands, num_to_str(result), FLAG_NONE);
+    stack_push(operands, num_to_str(result));
     return true;
 }
 
 /**
  * Apply one or more operators currently on the stack.
  */
-bool apply_stack_operators(char op, bool unary, stack *operands,
-        stack *operators) {
+bool apply_stack_operators(char op, bool unary, Stack **operands,
+        Stack **operators) {
     // Loop through the operator stack and apply operators until we reach one
     // that's of lower precedence (with different rules for unary operators)
-    stack_item *item;
-    while (!stack_is_empty(operators)) {
-        item = stack_top_item(operators);
-        if (!compare_operators(get_op(item->val[0], item->flags),
-                    get_op(op, unary)))
+    while (*operators != NULL) {
+        if (!compare_operators(stack_top(*operators), get_op(op, unary)))
             break;
-
-        item = stack_top_item(operators);
-        if (!apply_operator(get_op(item->val[0], item->flags), operands))
+        if (!apply_operator(stack_pop(operators), operands))
             return false;
-        free(stack_pop(operators));
     }
 
     return true;
@@ -327,9 +305,9 @@ bool apply_stack_operators(char op, bool unary, stack *operands,
 /**
  * Apply a function with arguments.
  */
-int apply_function(char *func, stack *operands) {
+int apply_function(const char *func, Stack **operands) {
     // Function arguments can't be void
-    if (stack_is_empty(operands))
+    if (*operands == NULL)
         return ERROR_FUNC_NOARGS;
 
     // Pop the last operand from the stack and use it as the argument. (Only
@@ -356,7 +334,7 @@ int apply_function(char *func, stack *operands) {
     else    /* unknown function */
         return ERROR_FUNC_UNDEF;
 
-    stack_push_unalloc(operands, num_to_str(result), FLAG_NONE);
+    stack_push(operands, num_to_str(result));
     return SUCCESS;
 }
 
@@ -383,9 +361,9 @@ char *num_to_str(double num) {
 /**
  * Wrapper around strtod() that also frees the string that was converted.
  */
-double strtod_unalloc(char *str) {
+double strtod_unalloc(const char *str) {
     double num = strtod(str, NULL);
-    free(str);
+    free((void *)str);
     return num;
 }
 

@@ -3,27 +3,14 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
-#include <stdbool.h>
+typedef struct Stack Stack;
 
-typedef struct {
-    char *val;
-    short int flags;
-    struct stack_item *next;
-} stack_item;
+// Inserts a new element at the top of the stack. Initialize new stacks to NULL
+// before calling this function.
+void stack_push(Stack **stack, const void *value);
 
-typedef struct {
-    stack_item *current;
-    stack_item *top;
-} stack;
+// Removes an element from the top of the stack. If empty, returns NULL.
+const void *stack_pop(Stack **stack);
 
-stack *stack_alloc(void);
-void stack_push(stack *list, char *val, short int flags);
-void stack_push_unalloc(stack *list, char *val, short int flags);
-char *stack_pop(stack *list);
-stack_item *stack_pop_item(stack *list);
-char stack_pop_char(stack *list);
-char *stack_top(stack *list);
-stack_item *stack_top_item(stack *list);
-bool stack_is_empty(stack *list);
-void stack_free(stack *list);
-void stack_free_item(stack_item *item);
+// Returns the value at the top of the stack.
+const void *stack_top(const Stack *stack);

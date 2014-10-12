@@ -15,8 +15,8 @@ int main(int argc, char *argv[]) {
     double result = shunting_yard(str);
     free(str);
 
-    if (errno == SUCCESS_EQ) {  // equations (with "=")
-        printf("%s\n", result ? "true" : "false");
+    if (errno == SUCCESS_EQUAL || errno == SUCCESS_NOT_EQUAL) {
+        printf("%s\n", errno == SUCCESS_EQUAL ? "true" : "false");
         return EXIT_SUCCESS;
     } else if (errno != SUCCESS)
         return errno;

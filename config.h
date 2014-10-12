@@ -1,4 +1,4 @@
-// Copyright 2011 - 2013 Brian Marshall. All rights reserved.
+// Copyright 2011 - 2014 Brian Marshall. All rights reserved.
 //
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
@@ -7,7 +7,8 @@
 #define TERM_WIDTH 80
 
 // Return types
-#define SUCCESS_EQ           -1
+#define SUCCESS_NOT_EQUAL    -2
+#define SUCCESS_EQUAL        -1
 #define SUCCESS               0
 #define ERROR_SYNTAX          1
 #define ERROR_SYNTAX_STACK    2
@@ -19,10 +20,6 @@
 #define ERROR_FUNC_UNDEF      8
 #define ERROR_FUNC_NOARGS     9
 #define ERROR_CONST_UNDEF     10
-
-// Stack flags
-#define FLAG_NONE       0
-#define FLAG_BOOL_TRUE  1
 
 // For calls to error() with an unknown column number
 #define NO_COL_NUM -1
