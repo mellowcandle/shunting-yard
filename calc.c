@@ -40,11 +40,11 @@ void show_error(Status status, int expression_number, int column) {
         case ERROR_SYNTAX:
             message = "Syntax error";
             break;
-        case ERROR_RIGHT_PARENTHESIS:
-            message = "Extra parenthesis";
-            break;
-        case ERROR_LEFT_PARENTHESIS:
+        case ERROR_OPEN_PARENTHESIS:
             message = "Missing parenthesis";
+            break;
+        case ERROR_CLOSE_PARENTHESIS:
+            message = "Extra parenthesis";
             break;
         case ERROR_UNRECOGNIZED:
             message = "Unknown character";

@@ -2,7 +2,7 @@ CC = gcc
 SOURCES = shunting-yard.c stack.c
 calc_SOURCES = $(SOURCES) calc.c
 tests_SOURCES = $(SOURCES) tests.c
-DEPS = config.h shunting-yard.h stack.h
+DEPS = shunting-yard.h stack.h
 CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -Werror -D_BSD_SOURCE
 LDFLAGS = -lm
 
