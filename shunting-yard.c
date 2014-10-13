@@ -57,7 +57,6 @@ Status shunting_yard(const char *expression, double *result,
     int paren_depth = 0;
     int error_index = -1;
     char previous_c = '\0';
-    const char *operand = NULL;
 
     for (size_t i = 0; i <= strlen(expression); i++) {
         char c = expression[i];
@@ -146,9 +145,9 @@ Status shunting_yard(const char *expression, double *result,
 
             // Check if this is the end of a function
             if (functions != NULL) {
-                operand = stack_pop(&functions);
-                status = apply_function(operand, &operands);
-                free((void *)operand);
+                const char *function = stack_pop(&functions);
+                status = apply_function(function, &operands);
+                free((void *)function);
 
                 if (status > SUCCESS) {
                     // TODO: accurate column number
