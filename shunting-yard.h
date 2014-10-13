@@ -3,26 +3,32 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
-#include "stack.h"
-
-#include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
-extern bool sy_quiet;
+typedef enum {
+    SUCCESS_NOT_EQUAL = -2,
+    SUCCESS_EQUAL,
+    SUCCESS,
+    ERROR_SYNTAX,
+    ERROR_RIGHT_PARENTHESIS,
+    ERROR_LEFT_PARENTHESIS,
+    ERROR_UNRECOGNIZED,
+    ERROR_NO_INPUT,
+    ERROR_UNDEFINED_FUNCTION,
+    ERROR_FUNCTION_ARGUMENTS,
+    ERROR_UNDEFINED_CONSTANT
+} Status;
 
-typedef struct Operator Operator;
+// Parses a mathematical expression and computes the result.
+//
+// Returns `<= SUCCESS` if successful, or `> SUCCESS` if an error occurred. If
+// `error_column` is not NULL, it will be set to the error's column number in
+// the expression.
+Status shunting_yard(const char *expression, double *result, int *error_column);
 
-double shunting_yard(char *str);
-bool push_operand(char *str, int pos_a, int pos_b, Stack **operands);
-bool apply_operator(const Operator *operator, Stack **operands);
-bool apply_unary_operator(char op, Stack **operands);
-bool apply_stack_operators(Stack **operators, Stack **operands,
-        const Operator *new_operator);
-int apply_function(const char *func, Stack **args);
 char *num_to_str(double num);
 double strtod_unalloc(const char *str);
-void error(int type, int col_num, char *str);
-char *substr(char *str, int start, size_t len);
+char *substr(const char *str, int start, size_t len);
 bool is_unary(char op, char prev_chr);
 char *rtrim(char *str);

@@ -5,21 +5,18 @@
 //
 // Based on CUnit example code: <http://cunit.sourceforge.net/example.html>.
 
-#include "config.h"
 #include "shunting-yard.h"
 
 #include <CUnit/Basic.h>
 
-#include <math.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#define SY_ASSERT(expected, expression) \
+        SY_ASSERT_STATUS(SUCCESS, expression); \
+        CU_ASSERT_DOUBLE_EQUAL(expected, result, 0.000000000001)
 
-const double float_precision = 0.000000000001;
+#define SY_ASSERT_STATUS(expected, expression) \
+        CU_ASSERT(shunting_yard(expression, &result, NULL) <= expected)
 
-#define SY_ASSERT(a, b) CU_ASSERT_DOUBLE_EQUAL(shunting_yard(b), a, \
-        float_precision); CU_ASSERT(errno <= SUCCESS); errno = 0
-#define SY_E_ASSERT(a, b) shunting_yard(b); CU_ASSERT_EQUAL(errno, a); \
-        errno = 0
+static double result = 0.0;
 
 void test_add() {
     SY_ASSERT(4, "2+2");
@@ -110,15 +107,15 @@ void test_variable() {
 }
 
 void test_equal() {
-    SY_E_ASSERT(SUCCESS_EQUAL, "2=2");
-    SY_E_ASSERT(SUCCESS_NOT_EQUAL, "1=2");
-    SY_E_ASSERT(SUCCESS_EQUAL, "0=0");
-    SY_E_ASSERT(SUCCESS_EQUAL, "(2=2)");
-    SY_E_ASSERT(SUCCESS_EQUAL, "2=2=2");
-    SY_E_ASSERT(SUCCESS_NOT_EQUAL, "2=1=2");
-    SY_E_ASSERT(SUCCESS_EQUAL, "5+3=2+6=10-2");
-    SY_E_ASSERT(SUCCESS_NOT_EQUAL, "5+3=1+6=10-2");
-    SY_E_ASSERT(SUCCESS_EQUAL, "(2+3)=(1+4)=5");
+    SY_ASSERT_STATUS(SUCCESS_EQUAL, "2=2");
+    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1=2");
+    SY_ASSERT_STATUS(SUCCESS_EQUAL, "0=0");
+    SY_ASSERT_STATUS(SUCCESS_EQUAL, "(2=2)");
+    SY_ASSERT_STATUS(SUCCESS_EQUAL, "2=2=2");
+    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "2=1=2");
+    SY_ASSERT_STATUS(SUCCESS_EQUAL, "5+3=2+6=10-2");
+    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "5+3=1+6=10-2");
+    SY_ASSERT_STATUS(SUCCESS_EQUAL, "(2+3)=(1+4)=5");
 }
 
 void test_order() {
@@ -136,28 +133,25 @@ void test_order() {
 }
 
 void test_error() {
-    SY_E_ASSERT(ERROR_SYNTAX, "a2");
-    SY_E_ASSERT(ERROR_SYNTAX, "2**2");
-    SY_E_ASSERT(ERROR_SYNTAX, "*1");
-    SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*.");
-    SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*2 3");
-    SY_E_ASSERT(ERROR_SYNTAX_OPERAND, "2*2.3.4");
-    SY_E_ASSERT(ERROR_RIGHT_PAREN, "(2+2))");
-    SY_E_ASSERT(ERROR_LEFT_PAREN, "(2+2");
-    SY_E_ASSERT(ERROR_UNRECOGNIZED, "2+&3");
-    SY_E_ASSERT(ERROR_NO_INPUT, "");
-    SY_E_ASSERT(ERROR_NO_INPUT, "       ");
-    SY_E_ASSERT(ERROR_FUNC_UNDEF, "foo(2)");
-    SY_E_ASSERT(ERROR_FUNC_NOARGS, "sqrt()");
-    SY_E_ASSERT(ERROR_CONST_UNDEF, "foo");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "a2");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "2**2");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "*1");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "2*.");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "2*2 3");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "2*2.3.4");
+    SY_ASSERT_STATUS(ERROR_RIGHT_PARENTHESIS, "(2+2))");
+    SY_ASSERT_STATUS(ERROR_LEFT_PARENTHESIS, "(2+2");
+    SY_ASSERT_STATUS(ERROR_UNRECOGNIZED, "2+&3");
+    SY_ASSERT_STATUS(ERROR_NO_INPUT, "");
+    SY_ASSERT_STATUS(ERROR_NO_INPUT, "       ");
+    SY_ASSERT_STATUS(ERROR_UNDEFINED_FUNCTION, "foo(2)");
+    SY_ASSERT_STATUS(ERROR_FUNCTION_ARGUMENTS, "sqrt()");
+    SY_ASSERT_STATUS(ERROR_UNDEFINED_CONSTANT, "foo");
 }
 
 int main() {
-    // Suppress error output from shunting_yard()
-    sy_quiet = true;
-
     // Initialize the CUnit test registry
-    if (CUE_SUCCESS != CU_initialize_registry())
+    if (CU_initialize_registry() != CUE_SUCCESS)
         goto error;
 
     // Add a suite to the registry
@@ -166,18 +160,18 @@ int main() {
         goto cleanup;
 
     // Add the tests to the suite (run in order)
-    if ((CU_add_test(suite, "addition", test_add)                   == NULL) ||
-            (CU_add_test(suite, "subtraction", test_subtract)       == NULL) ||
-            (CU_add_test(suite, "multiplication", test_multiply)    == NULL) ||
-            (CU_add_test(suite, "division", test_divide)            == NULL) ||
-            (CU_add_test(suite, "modulus", test_mod)                == NULL) ||
-            (CU_add_test(suite, "exponents", test_exponent)         == NULL) ||
-            (CU_add_test(suite, "factorials", test_factorial)       == NULL) ||
-            (CU_add_test(suite, "functions", test_function)         == NULL) ||
-            (CU_add_test(suite, "variables", test_variable)         == NULL) ||
-            (CU_add_test(suite, "equality", test_equal)             == NULL) ||
-            (CU_add_test(suite, "order of operations", test_order)  == NULL) ||
-            (CU_add_test(suite, "error handling", test_error)       == NULL))
+    if ((CU_add_test(suite, "addition", test_add) == NULL) ||
+            (CU_add_test(suite, "subtraction", test_subtract) == NULL) ||
+            (CU_add_test(suite, "multiplication", test_multiply) == NULL) ||
+            (CU_add_test(suite, "division", test_divide) == NULL) ||
+            (CU_add_test(suite, "modulus", test_mod) == NULL) ||
+            (CU_add_test(suite, "exponents", test_exponent) == NULL) ||
+            (CU_add_test(suite, "factorials", test_factorial) == NULL) ||
+            (CU_add_test(suite, "functions", test_function) == NULL) ||
+            (CU_add_test(suite, "variables", test_variable) == NULL) ||
+            (CU_add_test(suite, "equality", test_equal) == NULL) ||
+            (CU_add_test(suite, "order of operations", test_order) == NULL) ||
+            (CU_add_test(suite, "error handling", test_error) == NULL))
         goto cleanup;
 
     // Run all tests using the CUnit Basic interface
