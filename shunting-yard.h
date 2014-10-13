@@ -3,9 +3,6 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
-#include <stdbool.h>
-#include <stdlib.h>
-
 typedef enum {
     SUCCESS_NOT_EQUAL = -2,
     SUCCESS_EQUAL,

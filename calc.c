@@ -6,6 +6,7 @@
 #include "shunting-yard.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 static void show_error(Status status, int expression_number, int column);
 
