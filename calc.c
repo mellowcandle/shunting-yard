@@ -3,7 +3,6 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
-#include "config.h"
 #include "shunting-yard.h"
 
 #include <stdio.h>

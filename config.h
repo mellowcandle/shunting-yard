@@ -3,10 +3,6 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
-// Size of string to hold a hexadecimal representation of double precision
-// floating point numbers
-#define DOUBLE_STR_LEN 32
-
 // Convenience functions
 #define is_numeric(c) ((c >= '0' && c <= '9') || c == '.')
 #define is_alpha(c) ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))

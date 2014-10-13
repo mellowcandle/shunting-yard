@@ -26,9 +26,3 @@ typedef enum {
 // `error_column` is not NULL, it will be set to the error's column number in
 // the expression.
 Status shunting_yard(const char *expression, double *result, int *error_column);
-
-char *num_to_str(double num);
-double strtod_unalloc(const char *str);
-char *substr(const char *str, int start, size_t len);
-bool is_unary(char op, char prev_chr);
-char *rtrim(char *str);

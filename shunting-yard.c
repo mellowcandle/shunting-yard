@@ -7,11 +7,9 @@
 #include "config.h"
 #include "stack.h"
 
-#include <ctype.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <strings.h>
 
 typedef struct {
     char symbol;
@@ -34,16 +32,25 @@ static const Operator OPERATORS[] = {
     {')', 7, false}
 };
 
-static Status push_operand(const char *str, int pos_a, int pos_b,
-        Stack **operands);
+// Inserts an operand (number literal or constant) at the top of the stack.
+//
+// This will also recognize function identifiers and add them to the function
+// stack instead. TODO: Fix this parsing quirk.
+static Status push_operand(const char *string, int length, Stack **operands,
+        Stack **functions);
+
 static Status apply_operator(const Operator *operator, Stack **operands);
 static Status apply_unary_operator(char op, Stack **operands);
 static Status apply_stack_operators(Stack **operators, Stack **operands,
         const Operator *new_operator);
 static Status apply_function(const char *func, Stack **args);
+static bool is_unary(char op, char prev_chr);
 
 // Returns a matching operator.
 static const Operator *get_operator(char symbol, bool unary);
+
+// Frees a pointer to a double and returns its value.
+static double free_double(const double *pointer);
 
 Status shunting_yard(const char *expression, double *result,
         int *error_column) {
@@ -69,7 +76,8 @@ Status shunting_yard(const char *expression, double *result,
                 token_pos = i;
             else if (is_alpha(c) && is_numeric(previous_c)) {
                 // Parse expressions like "2a"
-                status = push_operand(expression, token_pos, i, &operands);
+                status = push_operand(expression + token_pos, i - token_pos,
+                        &operands, &functions);
                 if (status > SUCCESS) {
                     error_index = token_pos;
                     goto exit;
@@ -91,7 +99,8 @@ Status shunting_yard(const char *expression, double *result,
 
             goto skip;
         } else if (token_pos != -1) {   // end of operand
-            status = push_operand(expression, token_pos, i, &operands);
+            status = push_operand(expression + token_pos, i - token_pos,
+                    &operands, &functions);
             if (status > SUCCESS) {
                 error_index = token_pos;
                 goto exit;
@@ -114,10 +123,6 @@ Status shunting_yard(const char *expression, double *result,
         }
         // Parentheses
         else if (c == '(') {
-            // Check if this paren is starting a function
-            if (is_operand(previous_c))
-                stack_push(&functions, stack_pop(&operands));
-
             stack_push(&operators, get_operator(c, false));
             ++paren_depth;
             if (paren_depth == 1) paren_pos = i;
@@ -183,7 +188,7 @@ skip:
     if (operands == NULL)
         status = ERROR_NO_INPUT;
     else
-        *result = strtod_unalloc(stack_pop(&operands));
+        *result = free_double(stack_pop(&operands));
 
 exit:
     while (operands != NULL)
@@ -198,43 +203,38 @@ exit:
     return status;
 }
 
-/**
- * Push an operand onto the stack and substitute any constants.
- */
-Status push_operand(const char *str, int pos_a, int pos_b, Stack **operands) {
-    char *operand = rtrim(substr(str, pos_a, pos_b - pos_a));
-    Status status = SUCCESS;
+Status push_operand(const char *string, int length, Stack **operands,
+        Stack **functions) {
+    while (length > 0 && string[length - 1] == ' ')
+        length--;  // Strip whitespace from the end.
+    char token[length + 1];
+    snprintf(token, length + 1, "%s", string);
 
-    // Syntax check. Error if one of the following is true:
-    //     1. Operand ONLY contains "."
-    //     2. Operand contains a space
-    //     3. Operand contains more than one "."
-    if (strcmp(operand, ".") == 0 || strchr(operand, ' ') != NULL
-            || strchr(operand, '.') != strrchr(operand, '.')) {
-        status = ERROR_SYNTAX;
-        goto error;
-    }
+    double *operand = calloc(1, sizeof (double));
+    if (is_alpha(token[0])) {
+        if (strcasecmp(token, "e") == 0)
+            *operand = M_E;
+        else if (strcasecmp(token, "pi") == 0)
+            *operand = M_PI;
+        else if (strcasecmp(token, "tau") == 0)
+            *operand = M_PI * 2;
+        else if (string[length] == '(') {
+            // This operand is a function identifier instead.
+            stack_push(functions, strdup(token));
+            return SUCCESS;
+        } else
+            return ERROR_UNDEFINED_CONSTANT;
+    } else {
+        char *end = NULL;
+        *operand = strtod(token, &end);
 
-    // Substitute constants
-    if (is_alpha(operand[0])) {
-        if (0 == strcasecmp(operand, "e"))
-            operand = num_to_str(M_E);
-        else if (0 == strcasecmp(operand, "pi"))
-            operand = num_to_str(M_PI);
-        else if (0 == strcasecmp(operand, "tau"))
-            operand = num_to_str(2 * M_PI);
-        else if (str[pos_b] != '(') {  // unknown constant
-            status = ERROR_UNDEFINED_CONSTANT;
-            goto error;
-        }
+        // If not all of the token is converted, the rest is invalid.
+        if (token + length != end)
+            return ERROR_SYNTAX;
     }
 
     stack_push(operands, operand);
-    return status;
-
-error:
-    free(operand);
-    return status;
+    return SUCCESS;
 }
 
 /**
@@ -248,34 +248,34 @@ Status apply_operator(const Operator *operator, Stack **operands) {
     if (operator->unary)
         return apply_unary_operator(operator->symbol, operands);
 
-    double result;
-    double val2 = strtod_unalloc(stack_pop(operands));
+    double *result = calloc(1, sizeof (double));
+    double val2 = free_double(stack_pop(operands));
     // Check for underflow again before we pop another operand
     if (*operands == NULL)
         return ERROR_SYNTAX;
-    double val1 = strtod_unalloc(stack_pop(operands));
+    double val1 = free_double(stack_pop(operands));
 
     Status status = SUCCESS;
     switch (operator->symbol) {
-        case '+': result = val1 + val2; break;
-        case '-': result = val1 - val2; break;
-        case '*': result = val1 * val2; break;
-        case '/': result = val1 / val2; break;
-        case '%': result = fmod(val1, val2); break;
-        case '^': result = pow(val1, val2); break;
+        case '+': *result = val1 + val2; break;
+        case '-': *result = val1 - val2; break;
+        case '*': *result = val1 * val2; break;
+        case '/': *result = val1 / val2; break;
+        case '%': *result = fmod(val1, val2); break;
+        case '^': *result = pow(val1, val2); break;
         case '=':
             if (0 == abs(val1 - val2)) {
                 status = SUCCESS_EQUAL;
-                result = val1;  // operator returns original value
+                *result = val1;  // operator returns original value
             } else {
                 status = SUCCESS_NOT_EQUAL;
-                result = 0;
+                *result = 0.0;
             }
             break;
         default: return ERROR_UNRECOGNIZED;  // unknown operator
     }
 
-    stack_push(operands, num_to_str(result));
+    stack_push(operands, result);
     return status;
 }
 
@@ -283,17 +283,17 @@ Status apply_operator(const Operator *operator, Stack **operands) {
  * Apply a unary operator to the stack.
  */
 Status apply_unary_operator(char op, Stack **operands) {
-    double result;
-    double val = strtod_unalloc(stack_pop(operands));
+    double *result = calloc(1, sizeof (double));
+    double val = free_double(stack_pop(operands));
 
     switch (op) {
-        case '+': result = val; break;  // values are assumed positive
-        case '-': result = -val; break;
-        case '!': result = tgamma(val + 1); break;
+        case '+': *result = val; break;  // values are assumed positive
+        case '-': *result = -val; break;
+        case '!': *result = tgamma(val + 1); break;
         default: return ERROR_UNRECOGNIZED;  // unknown operator
     }
 
-    stack_push(operands, num_to_str(result));
+    stack_push(operands, result);
     return SUCCESS;
 }
 
@@ -328,68 +328,30 @@ Status apply_function(const char *func, Stack **operands) {
 
     // Pop the last operand from the stack and use it as the argument. (Only
     // functions with exactly one argument are allowed.)
-    double arg = strtod_unalloc(stack_pop(operands));
-    double result;
+    double arg = free_double(stack_pop(operands));
+    double *result = calloc(1, sizeof (double));
 
     if (0 == strcasecmp(func, "abs"))
-        result = abs(arg);
+        *result = abs(arg);
     else if (0 == strcasecmp(func, "sqrt"))
-        result = sqrt(arg);
+        *result = sqrt(arg);
     else if (0 == strcasecmp(func, "ln"))
-        result = log(arg);
+        *result = log(arg);
     else if (0 == strcasecmp(func, "lb"))
-        result = log2(arg);
+        *result = log2(arg);
     else if (0 == strcasecmp(func, "lg") || 0 == strcasecmp(func, "log"))
-        result = log10(arg);
+        *result = log10(arg);
     else if (0 == strcasecmp(func, "cos"))
-        result = cos(arg);
+        *result = cos(arg);
     else if (0 == strcasecmp(func, "sin"))
-        result = sin(arg);
+        *result = sin(arg);
     else if (0 == strcasecmp(func, "tan"))
-        result = tan(arg);
+        *result = tan(arg);
     else    /* unknown function */
         return ERROR_UNDEFINED_FUNCTION;
 
-    stack_push(operands, num_to_str(result));
+    stack_push(operands, result);
     return SUCCESS;
-}
-
-const Operator *get_operator(char symbol, bool unary) {
-    for (size_t i = 0; i < sizeof OPERATORS / sizeof (Operator); i++) {
-        if (OPERATORS[i].symbol == symbol && OPERATORS[i].unary == unary)
-            return &OPERATORS[i];
-    }
-    return NULL;
-}
-
-/**
- * Convert a number to a character string, for adding to the stack.
- */
-char *num_to_str(double num) {
-    char *str = malloc(DOUBLE_STR_LEN);
-    snprintf(str, DOUBLE_STR_LEN, "%a", num);
-
-    return str;
-}
-
-/**
- * Wrapper around strtod() that also frees the string that was converted.
- */
-double strtod_unalloc(const char *str) {
-    double num = strtod(str, NULL);
-    free((void *)str);
-    return num;
-}
-
-/**
- * Return a substring.
- */
-char *substr(const char *str, int start, size_t len) {
-    char *substr = malloc(len + 1);
-    memcpy(substr, str + start, len);
-    substr[len] = '\0';
-
-    return substr;
 }
 
 /**
@@ -406,12 +368,16 @@ bool is_unary(char op, char prev_chr) {
         || ((is_operand(prev_chr) || prev_chr == ')') && op == '!');
 }
 
-/**
- * Trim whitespace from the end of a string.
- */
-char *rtrim(char *str) {
-    char *end = str + strlen(str);
-    while (isspace(*--end));
-    *(end + 1) = '\0';
-    return str;
+const Operator *get_operator(char symbol, bool unary) {
+    for (size_t i = 0; i < sizeof OPERATORS / sizeof (Operator); i++) {
+        if (OPERATORS[i].symbol == symbol && OPERATORS[i].unary == unary)
+            return &OPERATORS[i];
+    }
+    return NULL;
+}
+
+double free_double(const double *pointer) {
+    double value = *pointer;
+    free((void *)pointer);
+    return value;
 }
