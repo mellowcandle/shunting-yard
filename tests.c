@@ -12,7 +12,7 @@
 
 #define SY_ASSERT(expected, expression) \
         SY_ASSERT_STATUS(SUCCESS, expression); \
-        CU_ASSERT_DOUBLE_EQUAL(expected, result, 0.000000000001)
+        CU_ASSERT_DOUBLE_EQUAL(expected, result, 10e-11)
 
 #define SY_ASSERT_STATUS(expected, expression) \
         CU_ASSERT(shunting_yard(expression, &result) == expected)
@@ -60,7 +60,7 @@ void test_mod() {
     SY_ASSERT(10, "10%11");
     SY_ASSERT(0, "5 %5");
     SY_ASSERT(2.7, "5.7%3");
-    SY_ASSERT(1.14159265359, "pi%2");
+    SY_ASSERT(1.1415926535898, "pi%2");
 }
 
 void test_exponent() {

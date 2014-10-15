@@ -100,7 +100,7 @@ Status shunting_yard(const char *expression, double *result) {
     Status status = parse(tokens, token_count, &operands, &operators,
                           &functions);
     if (operands)
-        *result = pop_double(&operands);
+        *result = round(pop_double(&operands) * 10e14) / 10e14;
     else if (status == SUCCESS)
         status = ERROR_NO_INPUT;
 
