@@ -83,6 +83,7 @@ void test_factorial() {
 void test_function() {
     SY_ASSERT(32, "abs(-32)");
     SY_ASSERT(12, "abs(-5-7)");
+    SY_ASSERT(1.1, "abs(-1.1)");
     SY_ASSERT(10, "sqrt(100)");
     SY_ASSERT(10, "SqRt(100)");
     SY_ASSERT(10, "sqrt(sqrt(10000))");
@@ -118,6 +119,8 @@ void test_equal() {
     SY_ASSERT_STATUS(SUCCESS_EQUAL, "5+3=2+6=10-2");
     SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "5+3=1+6=10-2");
     SY_ASSERT_STATUS(SUCCESS_EQUAL, "(2+3)=(1+4)=5");
+    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1 = 1.1");
+    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1 = 1.9");
 }
 
 void test_order() {

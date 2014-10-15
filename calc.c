@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         else if (status == SUCCESS_NOT_EQUAL)
             printf("False\n");
         else
-            printf("%.16g\n", result);
+            printf("%.14g\n", result);
     }
     return EXIT_SUCCESS;
 }

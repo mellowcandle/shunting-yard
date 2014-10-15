@@ -309,7 +309,7 @@ Status apply_operator(const Operator *operator, Stack **operands) {
             x = pow(x, y);
             break;
         case '=':
-            if (abs(x - y) == 0)
+            if (fabs(x - y) < 10e-14)
                 status = SUCCESS_EQUAL;
             else {
                 x = 0.0;
@@ -347,7 +347,7 @@ Status apply_function(const char *function, Stack **operands) {
 
     double x = pop_double(operands);
     if (strcasecmp(function, "abs") == 0)
-        x = abs(x);
+        x = fabs(x);
     else if (strcasecmp(function, "sqrt") == 0)
         x = sqrt(x);
     else if (strcasecmp(function, "ln") == 0)
