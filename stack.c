@@ -13,7 +13,7 @@ struct Stack {
 };
 
 void stack_push(Stack **stack, const void *value) {
-    Stack *item = malloc(sizeof (Stack));
+    Stack *item = malloc(sizeof *item);
     item->value = value;
     item->next = *stack;
     *stack = item;
@@ -21,9 +21,6 @@ void stack_push(Stack **stack, const void *value) {
 
 const void *stack_pop(Stack **stack) {
     Stack *node = *stack;
-    if (node == NULL)
-        return NULL;
-
     const void *value = node->value;
     *stack = node->next;
     free(node);

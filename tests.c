@@ -153,31 +153,26 @@ void test_error() {
 }
 
 int main() {
-    // Initialize the CUnit test registry
     if (CU_initialize_registry() != CUE_SUCCESS)
         goto error;
-
-    // Add a suite to the registry
     CU_pSuite suite = CU_add_suite("shunting yard", NULL, NULL);
-    if (suite == NULL)
+    if (!suite)
         goto cleanup;
 
-    // Add the tests to the suite (run in order)
-    if ((CU_add_test(suite, "addition", test_add) == NULL) ||
-            (CU_add_test(suite, "subtraction", test_subtract) == NULL) ||
-            (CU_add_test(suite, "multiplication", test_multiply) == NULL) ||
-            (CU_add_test(suite, "division", test_divide) == NULL) ||
-            (CU_add_test(suite, "modulus", test_mod) == NULL) ||
-            (CU_add_test(suite, "exponents", test_exponent) == NULL) ||
-            (CU_add_test(suite, "factorials", test_factorial) == NULL) ||
-            (CU_add_test(suite, "functions", test_function) == NULL) ||
-            (CU_add_test(suite, "variables", test_variable) == NULL) ||
-            (CU_add_test(suite, "equality", test_equal) == NULL) ||
-            (CU_add_test(suite, "order of operations", test_order) == NULL) ||
-            (CU_add_test(suite, "error handling", test_error) == NULL))
+    if (!CU_add_test(suite, "addition", test_add) ||
+            !CU_add_test(suite, "subtraction", test_subtract) ||
+            !CU_add_test(suite, "multiplication", test_multiply) ||
+            !CU_add_test(suite, "division", test_divide) ||
+            !CU_add_test(suite, "modulus", test_mod) ||
+            !CU_add_test(suite, "exponents", test_exponent) ||
+            !CU_add_test(suite, "factorials", test_factorial) ||
+            !CU_add_test(suite, "functions", test_function) ||
+            !CU_add_test(suite, "variables", test_variable) ||
+            !CU_add_test(suite, "equality", test_equal) ||
+            !CU_add_test(suite, "order of operations", test_order) ||
+            !CU_add_test(suite, "error handling", test_error))
         goto cleanup;
 
-    // Run all tests using the CUnit Basic interface
     CU_basic_set_mode(CU_BRM_VERBOSE);
     CU_basic_run_tests();
 cleanup:

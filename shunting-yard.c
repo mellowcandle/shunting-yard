@@ -131,7 +131,7 @@ Token *tokenize(const char *expression, int *token_count) {
             type = TOKEN_CLOSE_PARENTHESIS;
         else if (strchr("!^+-*/%=", *c)) {
             type = TOKEN_OPERATOR;
-            value = calloc(2, sizeof (char));
+            value = calloc(2, sizeof *value);
             *value = *c;
         } else if (sscanf(c, "%m[0-9.]", &value))
             type = TOKEN_NUMBER;
@@ -235,7 +235,7 @@ Status push_operator(const Operator *operator, Stack **operands,
 }
 
 void push_double(double x, Stack **operands) {
-    double *pointer = malloc(sizeof (double));
+    double *pointer = malloc(sizeof *pointer);
     *pointer = x;
     stack_push(operands, pointer);
 }
@@ -372,7 +372,7 @@ bool is_unary(char symbol, const Token *previous) {
 }
 
 const Operator *get_operator(char symbol, bool unary) {
-    for (size_t i = 0; i < sizeof OPERATORS / sizeof (Operator); i++) {
+    for (size_t i = 0; i < sizeof OPERATORS / sizeof OPERATORS[0]; i++) {
         if (OPERATORS[i].symbol == symbol && OPERATORS[i].unary == unary)
             return &OPERATORS[i];
     }
