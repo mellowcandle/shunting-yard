@@ -3,7 +3,7 @@ SOURCES = shunting-yard.c stack.c
 calc_SOURCES = $(SOURCES) calc.c
 tests_SOURCES = $(SOURCES) tests.c
 DEPS = shunting-yard.h stack.h
-CFLAGS = -std=c99 -Wall -Wextra -Wpedantic -Werror -D_BSD_SOURCE
+CFLAGS = -std=c99 -Wall -Wextra -Werror
 LDFLAGS = -lm
 
 .PHONY: all debug clean

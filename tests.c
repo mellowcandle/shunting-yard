@@ -7,6 +7,7 @@
 
 #include "shunting-yard.h"
 
+#define _XOPEN_SOURCE 700
 #include <CUnit/Basic.h>
 
 #define SY_ASSERT(expected, expression) \
@@ -14,7 +15,7 @@
         CU_ASSERT_DOUBLE_EQUAL(expected, result, 0.000000000001)
 
 #define SY_ASSERT_STATUS(expected, expression) \
-        CU_ASSERT(shunting_yard(expression, &result, NULL) <= expected)
+        CU_ASSERT(shunting_yard(expression, &result) <= expected)
 
 static double result = 0.0;
 
@@ -134,12 +135,13 @@ void test_order() {
 }
 
 void test_error() {
-    SY_ASSERT_STATUS(ERROR_SYNTAX, "a2");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "2+*2");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "2**2");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "*1");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "2*.");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "2*2 3");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "2*2.3.4");
+    SY_ASSERT_STATUS(ERROR_SYNTAX, "pi2");
     SY_ASSERT_STATUS(ERROR_OPEN_PARENTHESIS, "(2+2");
     SY_ASSERT_STATUS(ERROR_CLOSE_PARENTHESIS, "(2+2))");
     SY_ASSERT_STATUS(ERROR_UNRECOGNIZED, "2+&3");

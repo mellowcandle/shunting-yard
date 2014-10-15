@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void show_error(Status status, int expression_number, int column);
+static void show_error(Status status);
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -18,11 +18,9 @@ int main(int argc, char *argv[]) {
 
     for (int i = 1; i < argc; i++) {
         double result = 0.0;
-        int error_column = 0;
-        Status status = shunting_yard(argv[i], &result, &error_column);
-
+        Status status = shunting_yard(argv[i], &result);
         if (status > SUCCESS) {
-            show_error(status, i, error_column);
+            show_error(status);
             return status;
         }
         if (status == SUCCESS_EQUAL)
@@ -35,7 +33,7 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
-void show_error(Status status, int expression_number, int column) {
+void show_error(Status status) {
     char *message = NULL;
     switch (status) {
         case ERROR_SYNTAX:
@@ -65,9 +63,5 @@ void show_error(Status status, int expression_number, int column) {
         default:
             message = "Unknown error";
     }
-    if (column)
-        fprintf(stderr, "%s (expression %d, column %d)\n",
-                message, expression_number, column);
-    else
-        fprintf(stderr, "%s (expression %d)\n", message, expression_number);
+    fprintf(stderr, "%s\n", message);
 }

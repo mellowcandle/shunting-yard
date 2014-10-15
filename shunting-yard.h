@@ -19,7 +19,5 @@ typedef enum {
 
 // Parses a mathematical expression and computes the result.
 //
-// Returns `<= SUCCESS` if successful, or `> SUCCESS` if an error occurred. If
-// `error_column` is not NULL, it will be set to the error's column number in
-// the expression.
-Status shunting_yard(const char *expression, double *result, int *error_column);
+// Returns `<= SUCCESS` if successful, or `> SUCCESS` if an error occurred.
+Status shunting_yard(const char *expression, double *result);
