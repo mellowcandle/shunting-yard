@@ -187,8 +187,9 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
                     operands, operators);
                 break;
             case TOKEN_NUMBER:
-                if (previous->type == TOKEN_IDENTIFIER ||
-                        previous->type == TOKEN_CLOSE_PARENTHESIS)
+                if (previous->type == TOKEN_CLOSE_PARENTHESIS ||
+                        previous->type == TOKEN_NUMBER ||
+                        previous->type == TOKEN_IDENTIFIER)
                     status = ERROR_SYNTAX;
                 else
                     status = push_number(tokens[i].value, operands);
