@@ -135,6 +135,7 @@ void test_order() {
     SY_ASSERT(20, "2+6/2*5+10/3-2/6");
     SY_ASSERT(1000000, "10^3!");
     SY_ASSERT(M_PI / 100, "10^-2pi");
+    SY_ASSERT(256, "2^2^3");
 }
 
 void test_error() {

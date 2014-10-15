@@ -29,26 +29,39 @@ typedef struct {
     char *value;
 } Token;
 
+typedef enum {
+    OPERATOR_OTHER,
+    OPERATOR_UNARY,
+    OPERATOR_BINARY
+} OperatorArity;
+
+typedef enum {
+    OPERATOR_NONE,
+    OPERATOR_LEFT,
+    OPERATOR_RIGHT
+} OperatorAssociativity;
+
 typedef struct {
     char symbol;
     int precedence;
-    bool unary;
+    OperatorArity arity;
+    OperatorAssociativity associativity;
 } Operator;
 
 static const Token NO_TOKEN = {TOKEN_NONE, NULL};
 
 static const Operator OPERATORS[] = {
-    {'!', 1, true},
-    {'^', 2, false},
-    {'+', 3, true},
-    {'-', 3, true},
-    {'*', 4, false},
-    {'/', 4, false},
-    {'%', 4, false},
-    {'+', 5, false},
-    {'-', 5, false},
-    {'=', 6, false},
-    {'(', 7, false}
+    {'!', 1, OPERATOR_UNARY,  OPERATOR_LEFT},
+    {'^', 2, OPERATOR_BINARY, OPERATOR_RIGHT},
+    {'+', 3, OPERATOR_UNARY,  OPERATOR_RIGHT},
+    {'-', 3, OPERATOR_UNARY,  OPERATOR_RIGHT},
+    {'*', 4, OPERATOR_BINARY, OPERATOR_LEFT},
+    {'/', 4, OPERATOR_BINARY, OPERATOR_LEFT},
+    {'%', 4, OPERATOR_BINARY, OPERATOR_LEFT},
+    {'+', 5, OPERATOR_BINARY, OPERATOR_LEFT},
+    {'-', 5, OPERATOR_BINARY, OPERATOR_LEFT},
+    {'=', 6, OPERATOR_BINARY, OPERATOR_LEFT},
+    {'(', 7, OPERATOR_OTHER,  OPERATOR_NONE}
 };
 
 // Returns a list of tokens extracted from the expression. `token_count` will be
@@ -86,11 +99,11 @@ static Status apply_unary_operator(const Operator *operator, Stack **operands);
 // Applies a function to the top operand.
 static Status apply_function(const char *function, Stack **operands);
 
-// Returns true if an operator is unary, using the previous token for context.
-static bool is_unary(char symbol, const Token *previous);
+// Returns the arity of an operator, using the previous token for context.
+static OperatorArity get_arity(char symbol, const Token *previous);
 
 // Returns a matching operator.
-static const Operator *get_operator(char symbol, bool unary);
+static const Operator *get_operator(char symbol, OperatorArity arity);
 
 Status shunting_yard(const char *expression, double *result) {
     int token_count = 0;
@@ -158,10 +171,10 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
             case TOKEN_OPEN_PARENTHESIS:
                 // Implicit multiplication: "N(N)".
                 if (previous->type == TOKEN_NUMBER)
-                    status = push_operator(get_operator('*', false), operands,
-                                           operators);
+                    status = push_operator(get_operator('*', OPERATOR_BINARY),
+                                           operands, operators);
 
-                stack_push(operators, get_operator('(', false));
+                stack_push(operators, get_operator('(', OPERATOR_OTHER));
                 break;
             case TOKEN_CLOSE_PARENTHESIS: {
                 // Apply operators until the previous open parenthesis is found.
@@ -182,7 +195,7 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
             case TOKEN_OPERATOR:
                 status = push_operator(
                     get_operator(*tokens[i].value,
-                                 is_unary(*tokens[i].value, previous)),
+                                 get_arity(*tokens[i].value, previous)),
                     operands, operators);
                 break;
             case TOKEN_NUMBER:
@@ -196,8 +209,8 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
             case TOKEN_IDENTIFIER:
                 // Implicit multiplication: "Nx".
                 if (previous->type == TOKEN_NUMBER)
-                    status = push_operator(get_operator('*', false), operands,
-                                           operators);
+                    status = push_operator(get_operator('*', OPERATOR_BINARY),
+                                           operands, operators);
 
                 if (previous->type == TOKEN_IDENTIFIER)
                     status = ERROR_SYNTAX;
@@ -231,9 +244,13 @@ Status push_operator(const Operator *operator, Stack **operands,
 
     Status status = SUCCESS;
     while (*operators && status <= SUCCESS) {
-        if (((const Operator *)stack_top(*operators))->precedence >
-                operator->precedence || operator->unary)
+        const Operator *stack_operator = stack_top(*operators);
+        if (operator->arity == OPERATOR_UNARY ||
+                operator->precedence < stack_operator->precedence ||
+                (operator->associativity == OPERATOR_RIGHT &&
+                 operator->precedence == stack_operator->precedence))
             break;
+
         status = apply_operator(stack_pop(operators), operands);
     }
     stack_push(operators, operator);
@@ -281,7 +298,7 @@ Status push_constant(const char *value, Stack **operands) {
 Status apply_operator(const Operator *operator, Stack **operands) {
     if (!operator || !*operands)
         return ERROR_SYNTAX;
-    if (operator->unary)
+    if (operator->arity == OPERATOR_UNARY)
         return apply_unary_operator(operator, operands);
 
     double y = pop_double(operands);
@@ -369,17 +386,17 @@ Status apply_function(const char *function, Stack **operands) {
     return SUCCESS;
 }
 
-bool is_unary(char symbol, const Token *previous) {
-    if (symbol == '!')
-        return true;
-    return previous->type == TOKEN_NONE ||
-           previous->type == TOKEN_OPEN_PARENTHESIS ||
-           (previous->type == TOKEN_OPERATOR && *previous->value != '!');
+OperatorArity get_arity(char symbol, const Token *previous) {
+    if (symbol == '!' || previous->type == TOKEN_NONE ||
+            previous->type == TOKEN_OPEN_PARENTHESIS ||
+            (previous->type == TOKEN_OPERATOR && *previous->value != '!'))
+        return OPERATOR_UNARY;
+    return OPERATOR_BINARY;
 }
 
-const Operator *get_operator(char symbol, bool unary) {
+const Operator *get_operator(char symbol, OperatorArity arity) {
     for (size_t i = 0; i < sizeof OPERATORS / sizeof OPERATORS[0]; i++) {
-        if (OPERATORS[i].symbol == symbol && OPERATORS[i].unary == unary)
+        if (OPERATORS[i].symbol == symbol && OPERATORS[i].arity == arity)
             return &OPERATORS[i];
     }
     return NULL;
