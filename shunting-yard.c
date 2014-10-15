@@ -176,7 +176,7 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
                 if (!found_parenthesis)
                     status = ERROR_CLOSE_PARENTHESIS;
                 else if (*functions)
-                    status = apply_function(stack_top(*functions), operands);
+                    status = apply_function(stack_pop(functions), operands);
                 break;
             }
             case TOKEN_OPERATOR:
