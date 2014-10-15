@@ -5,10 +5,11 @@
 //
 // Based on CUnit example code: <http://cunit.sourceforge.net/example.html>.
 
-#include "shunting-yard.h"
+#include "../src/shunting-yard.h"
 
 #define _XOPEN_SOURCE 700
 #include <CUnit/Basic.h>
+#include <stdlib.h>
 
 #define SY_ASSERT(expected, expression) \
         SY_ASSERT_STATUS(SUCCESS, expression); \
@@ -19,7 +20,7 @@
 
 static double result = 0.0;
 
-void test_add() {
+static void test_addition() {
     SY_ASSERT(4, "2+2");
     SY_ASSERT(4, "2  +  2");
     SY_ASSERT(4, "2+2.");
@@ -28,7 +29,7 @@ void test_add() {
     SY_ASSERT(4.2, "2.1+2.1");
 }
 
-void test_subtract() {
+static void test_subtraction() {
     SY_ASSERT(4, "8-4");
     SY_ASSERT(5, "15-10");
     SY_ASSERT(28, "27 - (10 - 11)");
@@ -37,7 +38,7 @@ void test_subtract() {
     SY_ASSERT(-12, "(-5-7)");
 }
 
-void test_multiply() {
+static void test_multiplication() {
     SY_ASSERT(26, "13 * 2");
     SY_ASSERT(6.4, "3.2*2");
     SY_ASSERT(55, "20*2*1.375");
@@ -45,7 +46,7 @@ void test_multiply() {
     SY_ASSERT(13.5, "27*0.5");
 }
 
-void test_divide() {
+static void test_division() {
     SY_ASSERT(0.5, "1/2");
     SY_ASSERT(0.555, "3.885 / 7");
     SY_ASSERT(70, "(140/2)/0.5/2");
@@ -53,7 +54,7 @@ void test_divide() {
     SY_ASSERT(86, "2987898/34743");
 }
 
-void test_mod() {
+static void test_modulus() {
     SY_ASSERT(4, "10 % 6");
     SY_ASSERT(2, "2+3 % 3");
     SY_ASSERT(9, "6*5%21");
@@ -63,7 +64,7 @@ void test_mod() {
     SY_ASSERT(1.1415926535898, "pi%2");
 }
 
-void test_exponent() {
+static void test_exponentiation() {
     SY_ASSERT(9, "3^2");
     SY_ASSERT(0.01, "10^-2");
     SY_ASSERT(16, "4^2");
@@ -71,7 +72,7 @@ void test_exponent() {
     SY_ASSERT(390625, "5^(2^3)");
 }
 
-void test_factorial() {
+static void test_factorials() {
     SY_ASSERT(1, "1!");
     SY_ASSERT(2, "2!");
     SY_ASSERT(6, "3!");
@@ -80,7 +81,7 @@ void test_factorial() {
     SY_ASSERT(7, "3!+1");
 }
 
-void test_function() {
+static void test_functions() {
     SY_ASSERT(32, "abs(-32)");
     SY_ASSERT(12, "abs(-5-7)");
     SY_ASSERT(1.1, "abs(-1.1)");
@@ -99,7 +100,7 @@ void test_function() {
     SY_ASSERT(123, "lb(2^123)");
 }
 
-void test_variable() {
+static void test_variables() {
     SY_ASSERT(-1, "cos(pi)");
     SY_ASSERT(0, "tan(pi)");
     SY_ASSERT(0, "Tan(PI)");
@@ -109,7 +110,7 @@ void test_variable() {
     SY_ASSERT(1, "((2pi/tau)+(10pi))/(1+10pi)");
 }
 
-void test_equal() {
+static void test_equality() {
     SY_ASSERT_STATUS(SUCCESS_EQUAL, "2=2");
     SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1=2");
     SY_ASSERT_STATUS(SUCCESS_EQUAL, "0=0");
@@ -123,7 +124,7 @@ void test_equal() {
     SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1 = 1.9");
 }
 
-void test_order() {
+static void test_precedence() {
     SY_ASSERT(10, "6/3*5");
     SY_ASSERT(12, "6+3*2");
     SY_ASSERT(-100, "-10^2");
@@ -138,7 +139,7 @@ void test_order() {
     SY_ASSERT(256, "2^2^3");
 }
 
-void test_error() {
+static void test_errors() {
     SY_ASSERT_STATUS(ERROR_SYNTAX, "2+*2");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "2**2");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "*1");
@@ -159,29 +160,31 @@ void test_error() {
 
 int main() {
     if (CU_initialize_registry() != CUE_SUCCESS)
-        goto error;
-    CU_pSuite suite = CU_add_suite("shunting yard", NULL, NULL);
+        return CU_get_error();
+
+    unsigned int tests_failed = 0;
+    CU_pSuite suite = CU_add_suite("Shunting Yard", NULL, NULL);
     if (!suite)
-        goto cleanup;
+        goto exit;
 
-    if (!CU_add_test(suite, "addition", test_add) ||
-            !CU_add_test(suite, "subtraction", test_subtract) ||
-            !CU_add_test(suite, "multiplication", test_multiply) ||
-            !CU_add_test(suite, "division", test_divide) ||
-            !CU_add_test(suite, "modulus", test_mod) ||
-            !CU_add_test(suite, "exponents", test_exponent) ||
-            !CU_add_test(suite, "factorials", test_factorial) ||
-            !CU_add_test(suite, "functions", test_function) ||
-            !CU_add_test(suite, "variables", test_variable) ||
-            !CU_add_test(suite, "equality", test_equal) ||
-            !CU_add_test(suite, "order of operations", test_order) ||
-            !CU_add_test(suite, "error handling", test_error))
-        goto cleanup;
+    if (!CU_add_test(suite, "addition", test_addition) ||
+            !CU_add_test(suite, "subtraction", test_subtraction) ||
+            !CU_add_test(suite, "multiplication", test_multiplication) ||
+            !CU_add_test(suite, "division", test_division) ||
+            !CU_add_test(suite, "modulus", test_modulus) ||
+            !CU_add_test(suite, "exponentiation", test_exponentiation) ||
+            !CU_add_test(suite, "factorials", test_factorials) ||
+            !CU_add_test(suite, "functions", test_functions) ||
+            !CU_add_test(suite, "variables", test_variables) ||
+            !CU_add_test(suite, "equality", test_equality) ||
+            !CU_add_test(suite, "operator precedence", test_precedence) ||
+            !CU_add_test(suite, "error handling", test_errors))
+        goto exit;
 
-    CU_basic_set_mode(CU_BRM_VERBOSE);
+    CU_basic_set_mode(CU_BRM_NORMAL);
     CU_basic_run_tests();
-cleanup:
+    tests_failed = CU_get_number_of_tests_failed();
+exit:
     CU_cleanup_registry();
-error:
-    return CU_get_error();
+    return tests_failed ? EXIT_FAILURE : CU_get_error();
 }

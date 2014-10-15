@@ -1,2 +1,15 @@
-calc
-tests
+*.log
+*.o
+*.trs
+.deps
+.dirstamp
+/Makefile
+/Makefile.in
+/aclocal.m4
+/autom4te.cache
+/build-aux
+/config.status
+/configure
+
+/calc
+/tests/shunting-yard
