@@ -15,7 +15,7 @@
         CU_ASSERT_DOUBLE_EQUAL(expected, result, 0.000000000001)
 
 #define SY_ASSERT_STATUS(expected, expression) \
-        CU_ASSERT(shunting_yard(expression, &result) <= expected)
+        CU_ASSERT(shunting_yard(expression, &result) == expected)
 
 static double result = 0.0;
 
@@ -143,6 +143,7 @@ void test_error() {
     SY_ASSERT_STATUS(ERROR_SYNTAX, "2*2.3.4");
     SY_ASSERT_STATUS(ERROR_SYNTAX, "pi2");
     SY_ASSERT_STATUS(ERROR_OPEN_PARENTHESIS, "(2+2");
+    SY_ASSERT_STATUS(ERROR_OPEN_PARENTHESIS, "(2+2)+(2+2");
     SY_ASSERT_STATUS(ERROR_CLOSE_PARENTHESIS, "(2+2))");
     SY_ASSERT_STATUS(ERROR_UNRECOGNIZED, "2+&3");
     SY_ASSERT_STATUS(ERROR_NO_INPUT, "");

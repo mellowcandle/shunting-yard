@@ -48,8 +48,7 @@ static const Operator OPERATORS[] = {
     {'+', 5, false},
     {'-', 5, false},
     {'=', 6, false},
-    {'(', 7, false},
-    {')', 7, false}
+    {'(', 7, false}
 };
 
 // Returns a list of tokens extracted from the expression. `token_count` will be
@@ -214,8 +213,14 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
             return status;
     }
 
-    while (*operators)  // Apply all remaining operators.
-        status = apply_operator(stack_pop(operators), operands);
+    // Apply all remaining operators.
+    while (*operators && status <= SUCCESS) {
+        const Operator *operator = stack_pop(operators);
+        if (operator->symbol == '(')
+            status = ERROR_OPEN_PARENTHESIS;
+        else
+            status = apply_operator(operator, operands);
+    }
     return status;
 }
 
