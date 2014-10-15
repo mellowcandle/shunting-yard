@@ -151,7 +151,7 @@ Token *tokenize(const char *expression, int *token_count) {
             type = TOKEN_IDENTIFIER;
 
         if (!isspace(*c)) {
-            tokens = realloc(tokens, sizeof (Token) * ++count);
+            tokens = realloc(tokens, sizeof *tokens * ++count);
             tokens[count - 1].type = type;
             tokens[count - 1].value = value;
         }
