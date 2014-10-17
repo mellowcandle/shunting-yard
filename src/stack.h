@@ -3,6 +3,9 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
+#ifndef SHUNTING_YARD_STACK_H
+#define SHUNTING_YARD_STACK_H
+
 typedef struct Stack Stack;
 
 // Inserts a new element at the top of the stack. Initialize new stacks to NULL
@@ -14,3 +17,5 @@ const void *stack_pop(Stack **stack);
 
 // Returns the value at the top of the stack.
 const void *stack_top(const Stack *stack);
+
+#endif  // SHUNTING_YARD_STACK_H

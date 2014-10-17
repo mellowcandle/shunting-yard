@@ -3,6 +3,9 @@
 // Use of this source code is governed by the BSD 2-Clause License that can be
 // found in the LICENSE file.
 
+#ifndef SHUNTING_YARD_H
+#define SHUNTING_YARD_H
+
 typedef enum {
     OK,
     ERROR_SYNTAX,
@@ -17,3 +20,5 @@ typedef enum {
 
 // Calculates the result of a mathematical expression.
 Status shunting_yard(const char *expression, double *result);
+
+#endif  // SHUNTING_YARD_H
