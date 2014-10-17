@@ -43,6 +43,8 @@ static void test_multiplication() {
     ASSERT_RESULT("20*2*1.375", 55);
     ASSERT_RESULT("0.75*((2*-4)*1.5)", -9);
     ASSERT_RESULT("27*0.5", 13.5);
+    ASSERT_RESULT("2(3)", 6);
+    ASSERT_RESULT("(2)(3)", 6);
 }
 
 static void test_division() {
@@ -99,7 +101,8 @@ static void test_functions() {
     ASSERT_RESULT("lb(2^123)", 123);
 }
 
-static void test_variables() {
+static void test_constants() {
+    ASSERT_RESULT("sin(pi)", 0);
     ASSERT_RESULT("cos(pi)", -1);
     ASSERT_RESULT("tan(pi)", 0);
     ASSERT_RESULT("Tan(PI)", 0);
@@ -107,6 +110,10 @@ static void test_variables() {
     ASSERT_RESULT("COS(TAU)", 1);
     ASSERT_RESULT("cos(2pi)", 1);
     ASSERT_RESULT("((2pi/tau)+(10pi))/(1+10pi)", 1);
+    ASSERT_RESULT("2pi", 6.2831853071796);
+    ASSERT_RESULT("pi(2)", 6.2831853071796);
+    ASSERT_RESULT("pi pi", 9.8696044010894);
+    ASSERT_RESULT("2pi pi", 19.739208802179);
 }
 
 static void test_precedence() {
@@ -160,7 +167,7 @@ int main() {
             !CU_add_test(suite, "exponentiation", test_exponentiation) ||
             !CU_add_test(suite, "factorials", test_factorials) ||
             !CU_add_test(suite, "functions", test_functions) ||
-            !CU_add_test(suite, "variables", test_variables) ||
+            !CU_add_test(suite, "constants", test_constants) ||
             !CU_add_test(suite, "operator precedence", test_precedence) ||
             !CU_add_test(suite, "error handling", test_errors))
         goto exit;

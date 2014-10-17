@@ -74,6 +74,9 @@ static Status parse(const Token *tokens, int token_count, Stack **operands,
 static Status push_operator(const Operator *operator, Stack **operands,
                             Stack **operators);
 
+// Pushes the multiplication operator to the stack.
+static Status push_multiplication(Stack **operands, Stack **operators);
+
 // Allocates memory for a double and pushes it to the stack.
 static void push_double(double x, Stack **operands);
 
@@ -166,10 +169,9 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
         const Token *next = i + 1 < token_count ? &tokens[i + 1] : &NO_TOKEN;
         switch (tokens[i].type) {
             case TOKEN_OPEN_PARENTHESIS:
-                // Implicit multiplication: "N(N)".
-                if (previous->type == TOKEN_NUMBER)
-                    status = push_operator(get_operator('*', OPERATOR_BINARY),
-                                           operands, operators);
+                // Implicit multiplication: "(2)(2)".
+                if (previous->type == TOKEN_CLOSE_PARENTHESIS)
+                    status = push_multiplication(operands, operators);
 
                 stack_push(operators, get_operator('(', OPERATOR_OTHER));
                 break;
@@ -200,21 +202,27 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
                         previous->type == TOKEN_NUMBER ||
                         previous->type == TOKEN_IDENTIFIER)
                     status = ERROR_SYNTAX;
-                else
+                else {
                     status = push_number(tokens[i].value, operands);
+
+                    // Implicit multiplication: "2(2)" or "2a".
+                    if (next->type == TOKEN_OPEN_PARENTHESIS ||
+                            next->type == TOKEN_IDENTIFIER)
+                        status = push_multiplication(operands, operators);
+                }
                 break;
             case TOKEN_IDENTIFIER:
-                // Implicit multiplication: "Nx".
-                if (previous->type == TOKEN_NUMBER)
-                    status = push_operator(get_operator('*', OPERATOR_BINARY),
-                                           operands, operators);
-
-                if (previous->type == TOKEN_IDENTIFIER)
-                    status = ERROR_SYNTAX;
-                else if (next->type == TOKEN_OPEN_PARENTHESIS)
+                // The identifier could be either a constant or function.
+                status = push_constant(tokens[i].value, operands);
+                if (status == ERROR_UNDEFINED_CONSTANT &&
+                        next->type == TOKEN_OPEN_PARENTHESIS) {
                     stack_push(functions, tokens[i].value);
-                else
-                    status = push_constant(tokens[i].value, operands);
+                    status = OK;
+                } else if (next->type == TOKEN_OPEN_PARENTHESIS ||
+                           next->type == TOKEN_IDENTIFIER) {
+                    // Implicit multiplication: "a(2)" or "a b".
+                    status = push_multiplication(operands, operators);
+                }
                 break;
             default:
                 status = ERROR_UNRECOGNIZED;
@@ -252,6 +260,11 @@ Status push_operator(const Operator *operator, Stack **operands,
     }
     stack_push(operators, operator);
     return status;
+}
+
+Status push_multiplication(Stack **operands, Stack **operators) {
+    return push_operator(get_operator('*', OPERATOR_BINARY), operands,
+                         operators);
 }
 
 void push_double(double x, Stack **operands) {
