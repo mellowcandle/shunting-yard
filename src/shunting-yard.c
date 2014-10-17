@@ -6,14 +6,12 @@
 #include "shunting-yard.h"
 #include "stack.h"
 
-#define _XOPEN_SOURCE 700
 #include <ctype.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 typedef enum {
     TOKEN_NONE,

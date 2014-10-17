@@ -7,7 +7,6 @@
 
 #include "../src/shunting-yard.h"
 
-#define _XOPEN_SOURCE 700
 #include <CUnit/Basic.h>
 #include <stdlib.h>
 
