@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #define SY_ASSERT(expected, expression) \
-        SY_ASSERT_STATUS(SUCCESS, expression); \
+        SY_ASSERT_STATUS(OK, expression); \
         CU_ASSERT_DOUBLE_EQUAL(expected, result, 10e-11)
 
 #define SY_ASSERT_STATUS(expected, expression) \
@@ -110,20 +110,6 @@ static void test_variables() {
     SY_ASSERT(1, "((2pi/tau)+(10pi))/(1+10pi)");
 }
 
-static void test_equality() {
-    SY_ASSERT_STATUS(SUCCESS_EQUAL, "2=2");
-    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1=2");
-    SY_ASSERT_STATUS(SUCCESS_EQUAL, "0=0");
-    SY_ASSERT_STATUS(SUCCESS_EQUAL, "(2=2)");
-    SY_ASSERT_STATUS(SUCCESS_EQUAL, "2=2=2");
-    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "2=1=2");
-    SY_ASSERT_STATUS(SUCCESS_EQUAL, "5+3=2+6=10-2");
-    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "5+3=1+6=10-2");
-    SY_ASSERT_STATUS(SUCCESS_EQUAL, "(2+3)=(1+4)=5");
-    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1 = 1.1");
-    SY_ASSERT_STATUS(SUCCESS_NOT_EQUAL, "1 = 1.9");
-}
-
 static void test_precedence() {
     SY_ASSERT(10, "6/3*5");
     SY_ASSERT(12, "6+3*2");
@@ -176,7 +162,6 @@ int main() {
             !CU_add_test(suite, "factorials", test_factorials) ||
             !CU_add_test(suite, "functions", test_functions) ||
             !CU_add_test(suite, "variables", test_variables) ||
-            !CU_add_test(suite, "equality", test_equality) ||
             !CU_add_test(suite, "operator precedence", test_precedence) ||
             !CU_add_test(suite, "error handling", test_errors))
         goto exit;

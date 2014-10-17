@@ -60,8 +60,7 @@ static const Operator OPERATORS[] = {
     {'%', 4, OPERATOR_BINARY, OPERATOR_LEFT},
     {'+', 5, OPERATOR_BINARY, OPERATOR_LEFT},
     {'-', 5, OPERATOR_BINARY, OPERATOR_LEFT},
-    {'=', 6, OPERATOR_BINARY, OPERATOR_LEFT},
-    {'(', 7, OPERATOR_OTHER,  OPERATOR_NONE}
+    {'(', 6, OPERATOR_OTHER,  OPERATOR_NONE}
 };
 
 // Returns a list of tokens extracted from the expression. `token_count` will be
@@ -114,7 +113,7 @@ Status shunting_yard(const char *expression, double *result) {
                           &functions);
     if (operands)
         *result = round(pop_double(&operands) * 10e14) / 10e14;
-    else if (status == SUCCESS)
+    else if (status == OK)
         status = ERROR_NO_INPUT;
 
     for (int i = 0; i < token_count; i++)
@@ -141,7 +140,7 @@ Token *tokenize(const char *expression, int *token_count) {
             type = TOKEN_OPEN_PARENTHESIS;
         else if (*c == ')')
             type = TOKEN_CLOSE_PARENTHESIS;
-        else if (strchr("!^+-*/%=", *c)) {
+        else if (strchr("!^*/%+-", *c)) {
             type = TOKEN_OPERATOR;
             value = calloc(2, sizeof *value);
             *value = *c;
@@ -163,7 +162,7 @@ Token *tokenize(const char *expression, int *token_count) {
 
 Status parse(const Token *tokens, int token_count, Stack **operands,
              Stack **operators, Stack **functions) {
-    Status status = SUCCESS;
+    Status status = OK;
     for (int i = 0; i < token_count; i++) {
         const Token *previous = i > 0 ? &tokens[i - 1] : &NO_TOKEN;
         const Token *next = i + 1 < token_count ? &tokens[i + 1] : &NO_TOKEN;
@@ -179,7 +178,7 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
             case TOKEN_CLOSE_PARENTHESIS: {
                 // Apply operators until the previous open parenthesis is found.
                 bool found_parenthesis = false;
-                while (*operators && status <= SUCCESS && !found_parenthesis) {
+                while (*operators && status == OK && !found_parenthesis) {
                     const Operator *operator = stack_pop(operators);
                     if (operator->symbol == '(')
                         found_parenthesis = true;
@@ -222,12 +221,12 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
             default:
                 status = ERROR_UNRECOGNIZED;
         }
-        if (status > SUCCESS)
+        if (status != OK)
             return status;
     }
 
     // Apply all remaining operators.
-    while (*operators && status <= SUCCESS) {
+    while (*operators && status == OK) {
         const Operator *operator = stack_pop(operators);
         if (operator->symbol == '(')
             status = ERROR_OPEN_PARENTHESIS;
@@ -242,8 +241,8 @@ Status push_operator(const Operator *operator, Stack **operands,
     if (!operator)
         return ERROR_SYNTAX;
 
-    Status status = SUCCESS;
-    while (*operators && status <= SUCCESS) {
+    Status status = OK;
+    while (*operators && status == OK) {
         const Operator *stack_operator = stack_top(*operators);
         if (operator->arity == OPERATOR_UNARY ||
                 operator->precedence < stack_operator->precedence ||
@@ -278,7 +277,7 @@ Status push_number(const char *value, Stack **operands) {
     if (value + strlen(value) != end_pointer)
         return ERROR_SYNTAX;
     push_double(x, operands);
-    return SUCCESS;
+    return OK;
 }
 
 Status push_constant(const char *value, Stack **operands) {
@@ -292,7 +291,7 @@ Status push_constant(const char *value, Stack **operands) {
     else
         return ERROR_UNDEFINED_CONSTANT;
     push_double(x, operands);
-    return SUCCESS;
+    return OK;
 }
 
 Status apply_operator(const Operator *operator, Stack **operands) {
@@ -305,13 +304,10 @@ Status apply_operator(const Operator *operator, Stack **operands) {
     if (!*operands)
         return ERROR_SYNTAX;
     double x = pop_double(operands);
-    Status status = SUCCESS;
+    Status status = OK;
     switch (operator->symbol) {
-        case '+':
-            x = x + y;
-            break;
-        case '-':
-            x = x - y;
+        case '^':
+            x = pow(x, y);
             break;
         case '*':
             x = x * y;
@@ -322,16 +318,11 @@ Status apply_operator(const Operator *operator, Stack **operands) {
         case '%':
             x = fmod(x, y);
             break;
-        case '^':
-            x = pow(x, y);
+        case '+':
+            x = x + y;
             break;
-        case '=':
-            if (fabs(x - y) < 10e-14)
-                status = SUCCESS_EQUAL;
-            else {
-                x = 0.0;
-                status = SUCCESS_NOT_EQUAL;
-            }
+        case '-':
+            x = x - y;
             break;
         default:
             return ERROR_UNRECOGNIZED;
@@ -355,7 +346,7 @@ Status apply_unary_operator(const Operator *operator, Stack **operands) {
             return ERROR_UNRECOGNIZED;
     }
     push_double(x, operands);
-    return SUCCESS;
+    return OK;
 }
 
 Status apply_function(const char *function, Stack **operands) {
@@ -383,7 +374,7 @@ Status apply_function(const char *function, Stack **operands) {
     else
         return ERROR_UNDEFINED_FUNCTION;
     push_double(x, operands);
-    return SUCCESS;
+    return OK;
 }
 
 OperatorArity get_arity(char symbol, const Token *previous) {

@@ -19,15 +19,10 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         double result = 0.0;
         Status status = shunting_yard(argv[i], &result);
-        if (status > SUCCESS) {
+        if (status != OK) {
             show_error(status);
             return status;
-        }
-        if (status == SUCCESS_EQUAL)
-            printf("True\n");
-        else if (status == SUCCESS_NOT_EQUAL)
-            printf("False\n");
-        else
+        } else
             printf("%.14g\n", result);
     }
     return EXIT_SUCCESS;

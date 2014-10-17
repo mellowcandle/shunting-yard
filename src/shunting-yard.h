@@ -4,9 +4,7 @@
 // found in the LICENSE file.
 
 typedef enum {
-    SUCCESS_NOT_EQUAL = -2,
-    SUCCESS_EQUAL,
-    SUCCESS,
+    OK,
     ERROR_SYNTAX,
     ERROR_OPEN_PARENTHESIS,
     ERROR_CLOSE_PARENTHESIS,
@@ -17,7 +15,5 @@ typedef enum {
     ERROR_UNDEFINED_CONSTANT
 } Status;
 
-// Parses a mathematical expression and computes the result.
-//
-// Returns `<= SUCCESS` if successful, or `> SUCCESS` if an error occurred.
+// Calculates the result of a mathematical expression.
 Status shunting_yard(const char *expression, double *result);
