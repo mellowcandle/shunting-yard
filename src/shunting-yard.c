@@ -15,6 +15,7 @@
 
 typedef enum {
     TOKEN_NONE,
+    TOKEN_UNKNOWN,
     TOKEN_OPEN_PARENTHESIS,
     TOKEN_CLOSE_PARENTHESIS,
     TOKEN_OPERATOR,
@@ -61,13 +62,13 @@ static const Operator OPERATORS[] = {
     {'(', 6, OPERATOR_OTHER,  OPERATOR_NONE}
 };
 
-// Returns a list of tokens extracted from the expression. `token_count` will be
-// set to the length of the list.
-static Token *tokenize(const char *expression, int *token_count);
+// Returns an array of tokens extracted from the expression. The array is
+// terminated by a token with type `TOKEN_NONE`.
+static Token *tokenize(const char *expression);
 
 // Parses a tokenized expression.
-static Status parse(const Token *tokens, int token_count, Stack **operands,
-                    Stack **operators, Stack **functions);
+static Status parse(const Token *tokens, Stack **operands, Stack **operators,
+                    Stack **functions);
 
 // Pushes an operator to the stack after applying operators with a higher
 // precedence.
@@ -106,19 +107,16 @@ static OperatorArity get_arity(char symbol, const Token *previous);
 static const Operator *get_operator(char symbol, OperatorArity arity);
 
 Status shunting_yard(const char *expression, double *result) {
-    int token_count = 0;
-    Token *tokens = tokenize(expression, &token_count);
-
+    Token *tokens = tokenize(expression);
     Stack *operands = NULL, *operators = NULL, *functions = NULL;
-    Status status = parse(tokens, token_count, &operands, &operators,
-                          &functions);
+    Status status = parse(tokens, &operands, &operators, &functions);
     if (operands)
         *result = round(pop_double(&operands) * 10e14) / 10e14;
     else if (status == OK)
         status = ERROR_NO_INPUT;
 
-    for (int i = 0; i < token_count; i++)
-        free(tokens[i].value);
+    for (Token *token = tokens; token->type != TOKEN_NONE; token++)
+        free(token->value);
     free(tokens);
     while (operands)
         pop_double(&operands);
@@ -129,45 +127,41 @@ Status shunting_yard(const char *expression, double *result) {
     return status;
 }
 
-Token *tokenize(const char *expression, int *token_count) {
-    Token *tokens = NULL;
-    int count = 0;
+Token *tokenize(const char *expression) {
+    int length = 0;
+    Token *tokens = malloc(sizeof *tokens);
     const char *c = expression;
     while (*c) {
-        TokenType type = TOKEN_NONE;
-        char *value = NULL;
-
+        Token token = {TOKEN_UNKNOWN, NULL};
         if (*c == '(')
-            type = TOKEN_OPEN_PARENTHESIS;
+            token.type = TOKEN_OPEN_PARENTHESIS;
         else if (*c == ')')
-            type = TOKEN_CLOSE_PARENTHESIS;
+            token.type = TOKEN_CLOSE_PARENTHESIS;
         else if (strchr("!^*/%+-", *c)) {
-            type = TOKEN_OPERATOR;
-            value = calloc(2, sizeof *value);
-            *value = *c;
-        } else if (sscanf(c, "%m[0-9.]", &value))
-            type = TOKEN_NUMBER;
-        else if (sscanf(c, "%m[A-Za-z]", &value))
-            type = TOKEN_IDENTIFIER;
+            token.type = TOKEN_OPERATOR;
+            token.value = calloc(2, sizeof *token.value);
+            *token.value = *c;
+        } else if (sscanf(c, "%m[0-9.]", &token.value))
+            token.type = TOKEN_NUMBER;
+        else if (sscanf(c, "%m[A-Za-z]", &token.value))
+            token.type = TOKEN_IDENTIFIER;
 
         if (!isspace(*c)) {
-            tokens = realloc(tokens, sizeof *tokens * ++count);
-            tokens[count - 1].type = type;
-            tokens[count - 1].value = value;
+            tokens = realloc(tokens, sizeof *tokens * (++length + 1));
+            tokens[length - 1] = token;
         }
-        c += value ? strlen(value) : 1;
+        c += token.value ? strlen(token.value) : 1;
     }
-    *token_count = count;
+    tokens[length] = NO_TOKEN;
     return tokens;
 }
 
-Status parse(const Token *tokens, int token_count, Stack **operands,
-             Stack **operators, Stack **functions) {
+Status parse(const Token *tokens, Stack **operands, Stack **operators,
+             Stack **functions) {
     Status status = OK;
-    for (int i = 0; i < token_count; i++) {
-        const Token *previous = i > 0 ? &tokens[i - 1] : &NO_TOKEN;
-        const Token *next = i + 1 < token_count ? &tokens[i + 1] : &NO_TOKEN;
-        switch (tokens[i].type) {
+    for (const Token *token = tokens, *previous = &NO_TOKEN, *next = token + 1;
+         token->type != TOKEN_NONE; previous = token, token = next++) {
+        switch (token->type) {
             case TOKEN_OPEN_PARENTHESIS:
                 // Implicit multiplication: "(2)(2)".
                 if (previous->type == TOKEN_CLOSE_PARENTHESIS)
@@ -175,6 +169,7 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
 
                 stack_push(operators, get_operator('(', OPERATOR_OTHER));
                 break;
+
             case TOKEN_CLOSE_PARENTHESIS: {
                 // Apply operators until the previous open parenthesis is found.
                 bool found_parenthesis = false;
@@ -191,19 +186,21 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
                     status = apply_function(stack_pop(functions), operands);
                 break;
             }
+
             case TOKEN_OPERATOR:
                 status = push_operator(
-                    get_operator(*tokens[i].value,
-                                 get_arity(*tokens[i].value, previous)),
+                    get_operator(*token->value,
+                                 get_arity(*token->value, previous)),
                     operands, operators);
                 break;
+
             case TOKEN_NUMBER:
                 if (previous->type == TOKEN_CLOSE_PARENTHESIS ||
                         previous->type == TOKEN_NUMBER ||
                         previous->type == TOKEN_IDENTIFIER)
                     status = ERROR_SYNTAX;
                 else {
-                    status = push_number(tokens[i].value, operands);
+                    status = push_number(token->value, operands);
 
                     // Implicit multiplication: "2(2)" or "2a".
                     if (next->type == TOKEN_OPEN_PARENTHESIS ||
@@ -211,12 +208,13 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
                         status = push_multiplication(operands, operators);
                 }
                 break;
+
             case TOKEN_IDENTIFIER:
                 // The identifier could be either a constant or function.
-                status = push_constant(tokens[i].value, operands);
+                status = push_constant(token->value, operands);
                 if (status == ERROR_UNDEFINED_CONSTANT &&
                         next->type == TOKEN_OPEN_PARENTHESIS) {
-                    stack_push(functions, tokens[i].value);
+                    stack_push(functions, token->value);
                     status = OK;
                 } else if (next->type == TOKEN_OPEN_PARENTHESIS ||
                            next->type == TOKEN_IDENTIFIER) {
@@ -224,6 +222,7 @@ Status parse(const Token *tokens, int token_count, Stack **operands,
                     status = push_multiplication(operands, operators);
                 }
                 break;
+
             default:
                 status = ERROR_UNRECOGNIZED;
         }
