@@ -139,8 +139,7 @@ Token *tokenize(const char *expression) {
             token.type = TOKEN_CLOSE_PARENTHESIS;
         else if (strchr("!^*/%+-", *c)) {
             token.type = TOKEN_OPERATOR;
-            token.value = calloc(2, sizeof *token.value);
-            *token.value = *c;
+            token.value = strndup(c, 1);
         } else if (sscanf(c, "%m[0-9.]", &token.value))
             token.type = TOKEN_NUMBER;
         else if (sscanf(c, "%m[A-Za-z]", &token.value))
