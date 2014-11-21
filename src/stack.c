@@ -20,10 +20,10 @@ void stack_push(Stack **stack, const void *value) {
 }
 
 const void *stack_pop(Stack **stack) {
-    Stack *node = *stack;
-    const void *value = node->value;
-    *stack = node->next;
-    free(node);
+    Stack *item = *stack;
+    const void *value = item->value;
+    *stack = item->next;
+    free(item);
     return value;
 }
 

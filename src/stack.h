@@ -8,14 +8,13 @@
 
 typedef struct Stack Stack;
 
-// Inserts a new element at the top of the stack. Initialize new stacks to NULL
-// before calling this function.
+// Inserts an item at the top of the stack.
 void stack_push(Stack **stack, const void *value);
 
-// Removes an element from the top of the stack. If empty, returns NULL.
+// Removes an item from the top of the stack.
 const void *stack_pop(Stack **stack);
 
-// Returns the value at the top of the stack.
+// Returns the item at the top of the stack without removing it.
 const void *stack_top(const Stack *stack);
 
 #endif  // SHUNTING_YARD_STACK_H
